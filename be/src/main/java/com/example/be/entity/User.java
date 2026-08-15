@@ -24,15 +24,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(name = "email", unique = true, length = 255)
     private String email;
 
     @Column(name = "username", nullable = false, unique = true, length = 255)
     private String username;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
-
 
     @Column(name = "premium_purchased_at")
     private LocalDateTime premiumPurchasedAt;
@@ -40,9 +39,6 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private Role role;
-
-    @Column(name = "avatar")
-    private String avatar;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

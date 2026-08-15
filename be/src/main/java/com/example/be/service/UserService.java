@@ -1,16 +1,12 @@
 package com.example.be.service;
 
-import com.example.be.dto.request.CreateUserRequest;
-import com.example.be.dto.response.UserResponse;
+import com.example.be.dto.request.*;
+import com.example.be.dto.response.*;
 import com.example.be.entity.User;
 import com.example.be.enums.Role;
 import com.example.be.repository.UserRepository;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
-
-import javax.swing.text.html.Option;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -20,21 +16,37 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public UserResponse createUser(CreateUserRequest createUserRequest) {
-
-        if (userRepository.existsByEmail(createUserRequest.email())) {
-            throw new RuntimeException("Email has been used!");
-        }
-
-        if (userRepository.existsByUsername(createUserRequest.username())) {
+    public RegisterReponse createUser(RegisterRequest registerRequest) {
+        if (userRepository.existsByUsername(registerRequest.username())) {
             throw new RuntimeException("Username has been used!");
         }
 
         User saved = userRepository.save(User.builder().
-                email(createUserRequest.email()).
-                username(createUserRequest.username()).
-                passwordHash(createUserRequest.passwordHash()).
+                username(registerRequest.username()).
+                passwordHash(registerRequest.password()).
                 role(Role.ROLE_USER).build());
-        return UserResponse.from(saved);
+        return RegisterReponse.from(saved);
     }
+
+    public LoginResponse readUser(LoginRequest loginRequest) {
+        User user = userRepository.findByUsername(loginRequest.username()).orElseThrow();
+        if (user.getPasswordHash().equals(loginRequest.password())) {
+            return LoginResponse.fromMock();
+        } else {
+            throw new RuntimeException("Username and password are wrong!");
+        }
+    }
+
+    public SubscriptionResponse purchase(SubscriptionRequest subscriptionRequest) {
+        return new SubscriptionResponse();
+    }
+
+    public ChangePasswordResponse changePassword(ChangePasswordRequest changePasswordRequest) {
+        return new ChangePasswordResponse();
+    }
+
+    public ForgetPasswordResponse forgetPassword(ForgetPasswordRequest forgetPasswordRequest) {
+        return new ForgetPasswordResponse();
+    }
+
 }

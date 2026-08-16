@@ -3,13 +3,17 @@ package com.example.be.entity;
 import com.example.be.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
-
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
@@ -19,7 +23,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -54,4 +58,13 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<RefreshToken> refreshTokens;
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public @Nullable String getPassword() {
+        return passwordHash;
+    }
 }

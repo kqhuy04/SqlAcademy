@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class UserController {
     private final UserService userService;
 
@@ -16,7 +16,7 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
+    @PostMapping("/auth/register")
     public ResponseEntity<RegisterReponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
         return ResponseEntity.ok(userService.createUser(registerRequest));
     }
@@ -36,9 +36,14 @@ public class UserController {
         return ResponseEntity.ok(userService.changePassword(changePasswordRequest));
     }
 
-    @PostMapping("/users/me/password")
-    public ResponseEntity<ForgetPasswordResponse> changePassword(@Valid @RequestBody ForgetPasswordRequest forgetPasswordRequest) {
-        return ResponseEntity.ok(userService.forgetPassword(forgetPasswordRequest));
+    @PostMapping("/auth/reset-password")
+    public ResponseEntity<ResetPasswordResponse> forgetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        return ResponseEntity.ok(userService.forgetPassword(resetPasswordRequest));
+    }
+
+    @DeleteMapping("/users/me")
+    public ResponseEntity<DeleteUserReponse> deleteUser() {
+        return ResponseEntity.ok(userService.deleteUser());
     }
 
 }

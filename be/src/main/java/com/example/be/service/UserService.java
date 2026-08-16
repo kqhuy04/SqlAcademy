@@ -4,16 +4,28 @@ import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.entity.User;
 import com.example.be.enums.Role;
+import com.example.be.jwt.JwtUtil;
 import com.example.be.repository.UserRepository;
-import jakarta.validation.Valid;
+import com.example.be.security.JwtAuthFilter;
+import io.jsonwebtoken.Jwt;
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserService {
-    private final UserRepository userRepository;
+public class UserService implements UserDetailsService {
 
-    UserService(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+
+    UserService(UserRepository userRepository, JwtUtil jwtUtil) {
+
         this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     public RegisterReponse createUser(RegisterRequest registerRequest) {
@@ -31,7 +43,8 @@ public class UserService {
     public LoginResponse readUser(LoginRequest loginRequest) {
         User user = userRepository.findByUsername(loginRequest.username()).orElseThrow();
         if (user.getPasswordHash().equals(loginRequest.password())) {
-            return LoginResponse.fromMock();
+            String token = jwtUtil.generateToken(user);
+            return new LoginResponse(token);
         } else {
             throw new RuntimeException("Username and password are wrong!");
         }
@@ -45,8 +58,17 @@ public class UserService {
         return new ChangePasswordResponse();
     }
 
-    public ForgetPasswordResponse forgetPassword(ForgetPasswordRequest forgetPasswordRequest) {
-        return new ForgetPasswordResponse();
+    public ResetPasswordResponse forgetPassword(ResetPasswordRequest resetPasswordRequest) {
+        return new ResetPasswordResponse();
     }
 
+    public @Nullable DeleteUserReponse deleteUser() {
+        return new DeleteUserReponse();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return user;
+    }
 }

@@ -4,6 +4,7 @@ import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.entity.User;
 import com.example.be.enums.Role;
+import com.example.be.exception.UsernameAlreadyExistsException;
 import com.example.be.jwt.JwtUtil;
 import com.example.be.repository.UserRepository;
 import com.example.be.security.JwtAuthFilter;
@@ -28,9 +29,9 @@ public class UserService implements UserDetailsService {
         this.jwtUtil = jwtUtil;
     }
 
-    public RegisterReponse createUser(RegisterRequest registerRequest) {
+    public RegisterReponse createUser(RegisterRequest registerRequest){
         if (userRepository.existsByUsername(registerRequest.username())) {
-            throw new RuntimeException("Username has been used!");
+            throw new UsernameAlreadyExistsException("Username has been used!");
         }
 
         User saved = userRepository.save(User.builder().
@@ -41,7 +42,7 @@ public class UserService implements UserDetailsService {
     }
 
     public LoginResponse readUser(LoginRequest loginRequest) {
-        User user = userRepository.findByUsername(loginRequest.username()).orElseThrow();
+        User user = userRepository.findByUsername(loginRequest.username()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (user.getPasswordHash().equals(loginRequest.password())) {
             String token = jwtUtil.generateToken(user);
             return new LoginResponse(token);

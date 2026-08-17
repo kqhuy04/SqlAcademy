@@ -1,4 +1,7 @@
 package com.example.be.dto.request;
 
-public class ChangePasswordRequest {
+public record ChangePasswordRequest(
+        String oldPassword,
+        String newPassword
+) {
 }

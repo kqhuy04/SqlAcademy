@@ -1,4 +1,6 @@
 package com.example.be.dto.response;
 
-public class ChangePasswordResponse {
+public record ChangePasswordResponse(
+        String message
+) {
 }

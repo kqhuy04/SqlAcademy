@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,6 +33,16 @@ public class GlobalExceptionHandler {
         List<FieldError> fieldErrorList = ex.getBindingResult().getFieldErrors();
         Map<String, String> map = fieldErrorList.stream().collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ValidationErrorResponse(400, map, LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(WrongPasswordException.class)
+    public ResponseEntity<ErrorResponse> handleUWrongPasswordException(WrongPasswordException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(409, ex.getMessage(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(UnauthenticatedException.class)
+    public ResponseEntity<ErrorResponse> handleUUnauthenticaedException(UnauthenticatedException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(401, ex.getMessage(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(RuntimeException.class)

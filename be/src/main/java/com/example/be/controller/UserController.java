@@ -1,10 +1,12 @@
 package com.example.be.controller;
 
+import com.example.be.dto.CustomUserDetails;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -44,6 +46,11 @@ public class UserController {
     @DeleteMapping("/users/me")
     public ResponseEntity<DeleteUserReponse> deleteUser() {
         return ResponseEntity.ok(userService.deleteUser());
+    }
+
+    @GetMapping("/users/me")
+    public ResponseEntity<?> getMe(@AuthenticationPrincipal CustomUserDetails principal) {
+        return ResponseEntity.ok(principal);
     }
 
 }

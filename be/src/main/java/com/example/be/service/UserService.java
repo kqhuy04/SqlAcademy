@@ -2,6 +2,7 @@ package com.example.be.service;
 
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
+import com.example.be.dto.CustomUserDetails;
 import com.example.be.entity.User;
 import com.example.be.enums.Role;
 import com.example.be.exception.UnauthenticatedException;
@@ -47,7 +48,8 @@ public class UserService implements UserDetailsService {
     public LoginResponse readUser(LoginRequest loginRequest) {
         User user = userRepository.findByUsername(loginRequest.username()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
-            String token = jwtUtil.generateToken(user);
+            CustomUserDetails userDetails = new CustomUserDetails(user.getUsername(), user.getRole(), user.getId());
+            String token = jwtUtil.generateToken(userDetails);
             return new LoginResponse(token);
         } else {
             throw new RuntimeException("Username and password are wrong!");
@@ -88,9 +90,9 @@ public class UserService implements UserDetailsService {
         return new DeleteUserReponse();
     }
 
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow();
-        return user;
+        return null;
     }
 }

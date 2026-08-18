@@ -5,17 +5,19 @@ import com.example.be.dto.CustomUserDetails;
 import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Component;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Date;
 
 @Component
-public class JwtUtil {
+public class TokenUtil {
 
     private final JwtConfig jwtConfig;
 
-    public JwtUtil(JwtConfig jwtConfig) {
+    public TokenUtil(JwtConfig jwtConfig) {
         this.jwtConfig = jwtConfig;
     }
-    public String generateToken(CustomUserDetails userDetails) {
+    public String generateAccessToken(CustomUserDetails userDetails) {
         return Jwts.builder().
                 subject(userDetails.getUsername())
                 .claim("role", userDetails.getRole().name())
@@ -24,5 +26,12 @@ public class JwtUtil {
                 .expiration(new Date(System.currentTimeMillis() + jwtConfig.getExpiration()))
                 .signWith(jwtConfig.jwtSigningKey(), Jwts.SIG.HS256)
                 .compact();
+    }
+
+    public String generateRefreshToken() {
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] randomBytes = new byte[64];
+        secureRandom.nextBytes(randomBytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
     }
 }

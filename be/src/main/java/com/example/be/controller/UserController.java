@@ -3,6 +3,7 @@ package com.example.be.controller;
 import com.example.be.dto.CustomUserDetails;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
+import com.example.be.service.RefreshTokenService;
 import com.example.be.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +14,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1")
 public class UserController {
     private final UserService userService;
+    private final RefreshTokenService refreshTokenService;
 
-    UserController(UserService userService) {
+    UserController(UserService userService, RefreshTokenService refreshTokenService) {
+
         this.userService = userService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/auth/register")
@@ -52,5 +56,11 @@ public class UserController {
     public ResponseEntity<?> getMe(@AuthenticationPrincipal CustomUserDetails principal) {
         return ResponseEntity.ok(principal);
     }
+
+    @PostMapping("/auth/refresh")
+    public ResponseEntity<RefreshTokenResponse> getMe(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        return ResponseEntity.ok(refreshTokenService.getRefreshToken(refreshTokenRequest));
+    }
+
 
 }

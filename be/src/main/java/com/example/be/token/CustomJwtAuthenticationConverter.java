@@ -1,4 +1,4 @@
-package com.example.be.jwt;
+package com.example.be.token;
 
 import com.example.be.dto.CustomUserDetails;
 import com.example.be.enums.Role;

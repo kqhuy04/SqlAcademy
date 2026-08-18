@@ -8,7 +8,7 @@ import com.example.be.enums.Role;
 import com.example.be.exception.UnauthenticatedException;
 import com.example.be.exception.UsernameAlreadyExistsException;
 import com.example.be.exception.WrongPasswordException;
-import com.example.be.jwt.JwtUtil;
+import com.example.be.token.JwtUtil;
 import com.example.be.repository.UserRepository;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;

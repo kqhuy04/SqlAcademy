@@ -24,8 +24,8 @@ public class RefreshToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "token_hash", nullable = false)
-    private String tokenHash;
+    @Column(name = "token", nullable = false, unique = true)
+    private String token;
 
     @Column(name = "revoked", nullable = false)
     private Boolean revoked;
@@ -36,7 +36,5 @@ public class RefreshToken {
 
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
-
-
 
 }

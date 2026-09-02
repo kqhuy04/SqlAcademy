@@ -1,4 +1,9 @@
 package com.example.be.dto.request;
 
-public class ResetPasswordRequest {
+import jakarta.validation.constraints.Email;
+
+public record ResetPasswordRequest(
+        @Email
+        String email
+) {
 }

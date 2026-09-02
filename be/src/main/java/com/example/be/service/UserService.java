@@ -6,6 +6,7 @@ import com.example.be.dto.CustomUserDetails;
 import com.example.be.entity.RefreshToken;
 import com.example.be.entity.User;
 import com.example.be.enums.Role;
+import com.example.be.exception.EmailAlreadyExistsException;
 import com.example.be.exception.UnauthenticatedException;
 import com.example.be.exception.UsernameAlreadyExistsException;
 import com.example.be.exception.WrongPasswordException;
@@ -13,7 +14,6 @@ import com.example.be.repository.RefreshTokenRepository;
 import com.example.be.token.TokenUtil;
 import com.example.be.repository.UserRepository;
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,8 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -39,8 +37,6 @@ public class UserService implements UserDetailsService {
     private final RefreshTokenRepository refreshTokenRepository;
 
 
-
-
     UserService(UserRepository userRepository, TokenUtil tokenUtil, PasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, RefreshTokenService refreshTokenService) {
 
         this.userRepository = userRepository;
@@ -50,16 +46,21 @@ public class UserService implements UserDetailsService {
         this.refreshTokenService = refreshTokenService;
     }
 
-    public RegisterReponse createUser(RegisterRequest registerRequest){
+    public RegisterResponse createUser(RegisterRequest registerRequest){
         if (userRepository.existsByUsername(registerRequest.username())) {
             throw new UsernameAlreadyExistsException("Username has been used!");
         }
 
+        if (userRepository.existsByEmail(registerRequest.email())) {
+            throw new EmailAlreadyExistsException("Email has been used!");
+        }
+
         User saved = userRepository.save(User.builder().
                 username(registerRequest.username()).
+                email(registerRequest.email()).
                 passwordHash(passwordEncoder.encode(registerRequest.password())).
                 role(Role.ROLE_USER).build());
-        return RegisterReponse.from(saved);
+        return RegisterResponse.from(saved);
     }
 
     public LoginResponse readUser(LoginRequest loginRequest) {
@@ -75,9 +76,21 @@ public class UserService implements UserDetailsService {
     }
 
     public SubscriptionResponse purchase(SubscriptionRequest subscriptionRequest) {
-        return new SubscriptionResponse();
-    }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UnauthenticatedException("User is not authenticated");
+        }
 
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            String username = userDetails.getUsername();
+            User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            user.setPremiumPurchasedAt(LocalDateTime.now());
+            userRepository.save(user);
+        }
+
+        return new SubscriptionResponse("Your subscriptions has been activated");
+    }
 
     @Transactional
     public ChangePasswordResponse changePassword(ChangePasswordRequest changePasswordRequest) {
@@ -109,12 +122,12 @@ public class UserService implements UserDetailsService {
 
     }
 
-    public ResetPasswordResponse forgetPassword(ResetPasswordRequest resetPasswordRequest) {
+    public ResetPasswordResponse resetPassword(ResetPasswordRequest resetPasswordRequest) {
         return new ResetPasswordResponse();
     }
 
-    public @Nullable DeleteUserReponse deleteUser() {
-        return new DeleteUserReponse();
+    public @Nullable DeleteUserResponse deleteUser() {
+        return new DeleteUserResponse();
     }
 
 

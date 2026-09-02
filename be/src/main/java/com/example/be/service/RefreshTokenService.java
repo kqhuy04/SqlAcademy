@@ -66,7 +66,7 @@ public class RefreshTokenService {
                 .user(user)
                 .token(refreshToken)
                 .revoked(false)
-                .expiredAt(LocalDateTime.now().plus(refreshTokenExpiration, ChronoUnit.MILLIS)).build());
+                .expiredAt(LocalDateTime.now().plus(refreshTokenExpiration, ChronoUnit.SECONDS)).build());
         return refreshToken;
     }
 }

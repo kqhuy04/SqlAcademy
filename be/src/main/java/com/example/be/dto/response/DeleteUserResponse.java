@@ -1,4 +1,4 @@
 package com.example.be.dto.response;
 
-public class DeleteUserReponse {
+public class DeleteUserResponse {
 }

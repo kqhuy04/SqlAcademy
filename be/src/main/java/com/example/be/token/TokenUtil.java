@@ -23,7 +23,7 @@ public class TokenUtil {
                 .claim("role", userDetails.getRole().name())
                 .claim("userId", userDetails.getUserId())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtConfig.getExpiration()))
+                .expiration(new Date(System.currentTimeMillis() + jwtConfig.getExpiration() * 1000))
                 .signWith(jwtConfig.jwtSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }

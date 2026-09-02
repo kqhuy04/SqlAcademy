@@ -1,4 +1,6 @@
 package com.example.be.dto.response;
 
-public class SubscriptionResponse {
+public record SubscriptionResponse(
+        String message
+) {
 }

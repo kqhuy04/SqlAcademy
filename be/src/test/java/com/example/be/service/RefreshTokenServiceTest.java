@@ -1,3 +1,5 @@
+package com.example.be.service;
+
 import com.example.be.exception.RefreshTokenNotFoundException;
 import com.example.be.service.RefreshTokenService;
 

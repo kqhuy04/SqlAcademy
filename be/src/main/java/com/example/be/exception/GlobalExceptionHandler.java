@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(409, ex.getMessage(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(409, ex.getMessage(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUsernameNotFoundException(UsernameNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(404, ex.getMessage(), LocalDateTime.now()));
@@ -36,13 +41,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         List<FieldError> fieldErrorList = ex.getBindingResult().getFieldErrors();
-        Map<String, String> map = fieldErrorList.stream().collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
+        Map<String, String> map = fieldErrorList.stream().collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage, (msg1, msg2) -> msg1));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ValidationErrorResponse(400, map, LocalDateTime.now()));
     }
 
     @ExceptionHandler(WrongPasswordException.class)
     public ResponseEntity<ErrorResponse> handleUWrongPasswordException(WrongPasswordException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(409, ex.getMessage(), LocalDateTime.now()));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(401, ex.getMessage(), LocalDateTime.now()));
     }
 
     @ExceptionHandler(UnauthenticatedException.class)

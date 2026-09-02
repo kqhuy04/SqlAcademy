@@ -27,9 +27,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(
-                        auth -> auth.
-                                requestMatchers("/api/v1/auth/**").permitAll().
-                        anyRequest().authenticated())
+                        auth -> auth
+                                .requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                                .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.decoder(jwtDecoder).jwtAuthenticationConverter(customJwtAuthenticationConverter))
                 );
         return http.build();

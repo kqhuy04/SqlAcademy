@@ -12,16 +12,13 @@ import com.example.be.exception.RefreshTokenInvalidException;
 import com.example.be.exception.RefreshTokenNotFoundException;
 import com.example.be.exception.UserNotFoundException;
 import com.example.be.repository.RefreshTokenRepository;
-import com.example.be.token.TokenUtil;
+import com.example.be.util.TokenUtil;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 
 @Service
 public class RefreshTokenService {

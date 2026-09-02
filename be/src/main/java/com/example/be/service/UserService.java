@@ -6,12 +6,10 @@ import com.example.be.dto.CustomUserDetails;
 import com.example.be.entity.RefreshToken;
 import com.example.be.entity.User;
 import com.example.be.enums.Role;
-import com.example.be.exception.EmailAlreadyExistsException;
-import com.example.be.exception.UnauthenticatedException;
-import com.example.be.exception.UsernameAlreadyExistsException;
-import com.example.be.exception.WrongPasswordException;
+import com.example.be.exception.*;
 import com.example.be.repository.RefreshTokenRepository;
-import com.example.be.token.TokenUtil;
+import com.example.be.util.PasswordGenerator;
+import com.example.be.util.TokenUtil;
 import com.example.be.repository.UserRepository;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;
@@ -36,14 +34,17 @@ public class UserService implements UserDetailsService {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
+    private final EmailService emailService;
 
-    UserService(UserRepository userRepository, TokenUtil tokenUtil, PasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, RefreshTokenService refreshTokenService) {
+
+    UserService(UserRepository userRepository, TokenUtil tokenUtil, PasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, RefreshTokenService refreshTokenService, EmailService emailService) {
 
         this.userRepository = userRepository;
         this.tokenUtil = tokenUtil;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository;
         this.refreshTokenService = refreshTokenService;
+        this.emailService = emailService;
     }
 
     public RegisterResponse createUser(RegisterRequest registerRequest){
@@ -123,7 +124,11 @@ public class UserService implements UserDetailsService {
     }
 
     public ResetPasswordResponse resetPassword(ResetPasswordRequest resetPasswordRequest) {
-        return new ResetPasswordResponse();
+        User user = userRepository.findByEmail(resetPasswordRequest.email()).orElseThrow(() -> new UserNotFoundException("Email not found"));
+        String newPassword = PasswordGenerator.generateRandomPassword(12);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        emailService.sendNewPasswordEmail(user.getEmail(), newPassword);
+        return new ResetPasswordResponse("An email with new password was send to your email");
     }
 
     public @Nullable DeleteUserResponse deleteUser() {

@@ -1,6 +1,6 @@
 package com.example.be.config;
 
-import com.example.be.token.CustomJwtAuthenticationConverter;
+import com.example.be.util.CustomJwtAuthenticationConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

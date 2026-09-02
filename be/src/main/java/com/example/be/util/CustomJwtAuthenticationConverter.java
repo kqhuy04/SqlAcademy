@@ -1,4 +1,4 @@
-package com.example.be.token;
+package com.example.be.util;
 
 import com.example.be.dto.CustomUserDetails;
 import com.example.be.enums.Role;

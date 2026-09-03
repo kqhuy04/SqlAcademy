@@ -30,4 +30,22 @@ public class PremiumCase {
 
     @Column(name = "db_path", nullable = false)
     private String dbPath;
+
+    @Column(name = "order_index")
+    private Integer orderIndex;
+
+    @Column(name = "base_score")
+    private Integer baseScore;
+
+    @Column(name = "xp_reward")
+    private Integer xpReward;
+
+    @Column(name = "bade_name")
+    private String badgeName;
+
+    @Column(name = "badge_icon")
+    private String badgeIcon;
+
+    @Column(name = "question_count")
+    private Integer questionCount;
 }

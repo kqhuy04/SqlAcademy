@@ -123,16 +123,44 @@ public class UserService implements UserDetailsService {
 
     }
 
+    @Transactional
     public ResetPasswordResponse resetPassword(ResetPasswordRequest resetPasswordRequest) {
         User user = userRepository.findByEmail(resetPasswordRequest.email()).orElseThrow(() -> new UserNotFoundException("Email not found"));
         String newPassword = PasswordGenerator.generateRandomPassword(12);
         user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        Long id = user.getId();
+        List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
+        refreshTokenList.stream()
+                .forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
         emailService.sendNewPasswordEmail(user.getEmail(), newPassword);
         return new ResetPasswordResponse("An email with new password was send to your email");
     }
 
-    public @Nullable DeleteUserResponse deleteUser() {
-        return new DeleteUserResponse();
+    @Transactional
+    public @Nullable DeleteUserResponse deleteUser(DeleteUserRequest deleteUserRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UnauthenticatedException("User is not authenticated");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            String username = userDetails.getUsername();
+            User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            if (passwordEncoder.matches(deleteUserRequest.password(), user.getPasswordHash())) {
+                Long id = user.getId();
+                List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
+                refreshTokenList.stream()
+                        .forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
+                userRepository.delete(user);
+            } else {
+                throw new WrongPasswordException("Password is wrong");
+            }
+        } else {
+            throw new UnauthenticatedException("User is not authenticated");
+        }
+        return new DeleteUserResponse("Account deleted successfully");
     }
 
 

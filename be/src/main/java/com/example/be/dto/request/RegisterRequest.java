@@ -7,6 +7,7 @@ public record RegisterRequest(
         @Size(min = 5, max = 30, message = "User must be between 5 and 30 characters")
         String username,
 
+        @NotBlank
         @Email(message = "Email is invalid")
         String email,
 

@@ -1,4 +1,6 @@
 package com.example.be.dto.response;
 
-public class DeleteUserResponse {
+public record DeleteUserResponse(
+        String message
+) {
 }

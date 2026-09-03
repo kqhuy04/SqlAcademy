@@ -42,10 +42,7 @@ public class AuthController {
         return ResponseEntity.ok(userService.resetPassword(resetPasswordRequest));
     }
 
-    @DeleteMapping("/users/me")
-    public ResponseEntity<DeleteUserResponse> deleteUser() {
-        return ResponseEntity.ok(userService.deleteUser());
-    }
+
 
     @GetMapping("/users/me")
     public ResponseEntity<?> getMe(@AuthenticationPrincipal CustomUserDetails principal) {

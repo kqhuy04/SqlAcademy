@@ -3,14 +3,14 @@ package com.example.be.enums;
 public enum UserEventType {
 
     ACCOUNT_CREATED,
-
     AD_WATCHED,
-
     CASE_STARTED,
     CASE_COMPLETED,
-
-    PREMIUM_PURCHASED,
-
+    SUBSCRIPTIONS,
     LOGIN,
-    LOGOUT
+    LOGOUT,
+    DELETE_ACCOUNT,
+    CHANGE_PASSWORD,
+    RESET_PASSWORD
+
 }

@@ -1,7 +1,5 @@
 package com.example.be.dto.response;
 
-import com.example.be.entity.RefreshToken;
-
 public record LoginResponse(
         String accessToken,
         String refreshToken

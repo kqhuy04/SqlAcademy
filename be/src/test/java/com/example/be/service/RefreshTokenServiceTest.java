@@ -1,11 +1,9 @@
 package com.example.be.service;
 
-import com.example.be.exception.RefreshTokenNotFoundException;
-import com.example.be.service.RefreshTokenService;
-
 import com.example.be.dto.request.LogoutRequest;
 import com.example.be.dto.response.LogoutResponse;
 import com.example.be.entity.RefreshToken;
+import com.example.be.exception.RefreshTokenNotFoundException;
 import com.example.be.repository.RefreshTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,10 +11,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static org.mockito.Mockito.*;
+
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RefreshTokenServiceTest {
@@ -54,6 +54,6 @@ class RefreshTokenServiceTest {
         LogoutRequest logoutRequest = new LogoutRequest("");
         when(refreshTokenRepository.findByToken("")).thenReturn(Optional.empty());
 
-        assertThrows(RefreshTokenNotFoundException.class, () ->refreshTokenService.logout(logoutRequest));
+        assertThrows(RefreshTokenNotFoundException.class, () -> refreshTokenService.logout(logoutRequest));
     }
 }

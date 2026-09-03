@@ -17,6 +17,7 @@ public class TokenUtil {
     public TokenUtil(JwtConfig jwtConfig) {
         this.jwtConfig = jwtConfig;
     }
+
     public String generateAccessToken(CustomUserDetails userDetails) {
         return Jwts.builder().
                 subject(userDetails.getUsername())

@@ -7,6 +7,7 @@ import com.example.be.dto.response.LogoutResponse;
 import com.example.be.dto.response.RefreshTokenResponse;
 import com.example.be.entity.RefreshToken;
 import com.example.be.entity.User;
+import com.example.be.enums.UserEventType;
 import com.example.be.exception.RefreshTokenExpiredException;
 import com.example.be.exception.RefreshTokenInvalidException;
 import com.example.be.exception.RefreshTokenNotFoundException;
@@ -16,6 +17,7 @@ import com.example.be.util.TokenUtil;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -25,13 +27,15 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final TokenUtil tokenUtil;
+    private final UserEventService userEventService;
 
     @Value("${rt.expiration}")
     private Long refreshTokenExpiration;
 
-    RefreshTokenService(RefreshTokenRepository refreshTokenRepository, TokenUtil tokenUtil) {
+    RefreshTokenService(RefreshTokenRepository refreshTokenRepository, TokenUtil tokenUtil, UserEventService userEventService) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.tokenUtil = tokenUtil;
+        this.userEventService = userEventService;
     }
 
     public RefreshTokenResponse getRefreshToken(RefreshTokenRequest refreshTokenRequest) {
@@ -51,9 +55,11 @@ public class RefreshTokenService {
         return new RefreshTokenResponse("User get back Access Token successfully", accessToken);
     }
 
+    @Transactional
     public @Nullable LogoutResponse logout(LogoutRequest logoutRequest) {
         RefreshToken token = refreshTokenRepository.findByToken(logoutRequest.refreshToken()).orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token not found"));
         refreshTokenRepository.delete(token);
+        userEventService.logEvent(token.getUser(), UserEventType.LOGOUT, "");
         return new LogoutResponse("You log out successfully");
     }
 
@@ -63,7 +69,7 @@ public class RefreshTokenService {
                 .user(user)
                 .token(refreshToken)
                 .revoked(false)
-                .expiredAt(LocalDateTime.now().plus(refreshTokenExpiration, ChronoUnit.SECONDS)).build());
+                .expiredAt(LocalDateTime.now().plusSeconds(refreshTokenExpiration)).build());
         return refreshToken;
     }
 }

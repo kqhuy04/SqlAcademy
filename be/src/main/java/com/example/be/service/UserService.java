@@ -1,16 +1,19 @@
 package com.example.be.service;
 
+import com.example.be.dto.CustomUserDetails;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
-import com.example.be.dto.CustomUserDetails;
 import com.example.be.entity.RefreshToken;
 import com.example.be.entity.User;
+import com.example.be.entity.UserEvent;
 import com.example.be.enums.Role;
+import com.example.be.enums.UserEventType;
 import com.example.be.exception.*;
 import com.example.be.repository.RefreshTokenRepository;
+import com.example.be.repository.UserEventRepository;
+import com.example.be.repository.UserRepository;
 import com.example.be.util.PasswordGenerator;
 import com.example.be.util.TokenUtil;
-import com.example.be.repository.UserRepository;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,8 +39,18 @@ public class UserService implements UserDetailsService {
 
     private final EmailService emailService;
 
+    private final UserEventService userEventService;
+    private final UserEventRepository userEventRepository;
 
-    UserService(UserRepository userRepository, TokenUtil tokenUtil, PasswordEncoder passwordEncoder, RefreshTokenRepository refreshTokenRepository, RefreshTokenService refreshTokenService, EmailService emailService) {
+
+    UserService(UserRepository userRepository,
+                TokenUtil tokenUtil,
+                PasswordEncoder passwordEncoder,
+                RefreshTokenRepository refreshTokenRepository,
+                RefreshTokenService refreshTokenService,
+                EmailService emailService,
+                UserEventService userEventService,
+                UserEventRepository userEventRepository) {
 
         this.userRepository = userRepository;
         this.tokenUtil = tokenUtil;
@@ -45,9 +58,12 @@ public class UserService implements UserDetailsService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.refreshTokenService = refreshTokenService;
         this.emailService = emailService;
+        this.userEventService = userEventService;
+        this.userEventRepository = userEventRepository;
     }
 
-    public RegisterResponse createUser(RegisterRequest registerRequest){
+    @Transactional
+    public RegisterResponse createUser(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.username())) {
             throw new UsernameAlreadyExistsException("Username has been used!");
         }
@@ -61,21 +77,25 @@ public class UserService implements UserDetailsService {
                 email(registerRequest.email()).
                 passwordHash(passwordEncoder.encode(registerRequest.password())).
                 role(Role.ROLE_USER).build());
+        userEventService.logEvent(saved, UserEventType.ACCOUNT_CREATED, "");
         return RegisterResponse.from(saved);
     }
 
+    @Transactional
     public LoginResponse readUser(LoginRequest loginRequest) {
         User user = userRepository.findByUsername(loginRequest.username()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
             CustomUserDetails userDetails = new CustomUserDetails(user.getUsername(), user.getRole(), user.getId());
             String accessToken = tokenUtil.generateAccessToken(userDetails);
             String refreshToken = refreshTokenService.generateRefreshToken(user);
+            userEventService.logEvent(user, UserEventType.LOGIN, "");
             return new LoginResponse(accessToken, refreshToken);
         } else {
             throw new WrongPasswordException("Username and password are wrong!");
         }
     }
 
+    @Transactional
     public SubscriptionResponse purchase(SubscriptionRequest subscriptionRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -88,6 +108,7 @@ public class UserService implements UserDetailsService {
             User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
             user.setPremiumPurchasedAt(LocalDateTime.now());
             userRepository.save(user);
+            userEventService.logEvent(user, UserEventType.SUBSCRIPTIONS, "");
         }
 
         return new SubscriptionResponse("Your subscriptions has been activated");
@@ -113,6 +134,7 @@ public class UserService implements UserDetailsService {
 
                 String accessToken = tokenUtil.generateAccessToken(new CustomUserDetails(user.getUsername(), user.getRole(), user.getId()));
                 String refreshToken = refreshTokenService.generateRefreshToken(user);
+                userEventService.logEvent(user, UserEventType.CHANGE_PASSWORD, "");
                 return new ChangePasswordResponse("Your password changed successfully", accessToken, refreshToken);
             } else {
                 throw new WrongPasswordException("Wrong password");
@@ -134,6 +156,7 @@ public class UserService implements UserDetailsService {
         refreshTokenList.stream()
                 .forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
         emailService.sendNewPasswordEmail(user.getEmail(), newPassword);
+        userEventService.logEvent(user, UserEventType.RESET_PASSWORD, "");
         return new ResetPasswordResponse("An email with new password was send to your email");
     }
 
@@ -153,6 +176,9 @@ public class UserService implements UserDetailsService {
                 List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
                 refreshTokenList.stream()
                         .forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
+                List<UserEvent> userEventList = userEventRepository.findByUserId(id);
+                userEventList.stream()
+                        .forEach(userEvent -> userEventRepository.delete(userEvent));
                 userRepository.delete(user);
             } else {
                 throw new WrongPasswordException("Password is wrong");

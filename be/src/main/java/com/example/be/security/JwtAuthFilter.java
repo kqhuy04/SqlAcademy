@@ -30,30 +30,30 @@
 //        this.userService = userService;
 //        this.jwtUtil = jwtUtil;
 //    }
-////    @Override
-////    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-////        String header = request.getHeader("Authorization");
-////        if (header != null && header.startsWith("Bearer ")) {
-////            String token = header.substring(7);
-////            String username = jwtUtil.extractUsername(token);
-////            logger.debug("Username: {}", username);
-////
-////            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-////                UserDetails userDetails = userService.loadUserByUsername(username);
-////                if (jwtUtil.isTokenValid(token, userDetails)) {
-////                    UsernamePasswordAuthenticationToken authToken =
-////                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-////                    SecurityContextHolder.getContext().setAuthentication(authToken);
-////                    logger.info("Authenticated: {}", username);
-////                } else {
-////                    logger.warn("Invalid or expired token for user: {}", username);
-////                }
-////            } else if (username == null) {
-////                logger.warn("Could not extract username from token");
-////            }
-////        }
-////        filterChain.doFilter(request, response);
-////    }
+/// /    @Override
+/// /    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+/// /        String header = request.getHeader("Authorization");
+/// /        if (header != null && header.startsWith("Bearer ")) {
+/// /            String token = header.substring(7);
+/// /            String username = jwtUtil.extractUsername(token);
+/// /            logger.debug("Username: {}", username);
+/// /
+/// /            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+/// /                UserDetails userDetails = userService.loadUserByUsername(username);
+/// /                if (jwtUtil.isTokenValid(token, userDetails)) {
+/// /                    UsernamePasswordAuthenticationToken authToken =
+/// /                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+/// /                    SecurityContextHolder.getContext().setAuthentication(authToken);
+/// /                    logger.info("Authenticated: {}", username);
+/// /                } else {
+/// /                    logger.warn("Invalid or expired token for user: {}", username);
+/// /                }
+/// /            } else if (username == null) {
+/// /                logger.warn("Could not extract username from token");
+/// /            }
+/// /        }
+/// /        filterChain.doFilter(request, response);
+/// /    }
 //
 //    @Override
 //    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

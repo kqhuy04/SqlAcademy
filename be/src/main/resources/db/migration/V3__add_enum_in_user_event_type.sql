@@ -1,0 +1,13 @@
+ALTER TABLE user_events
+MODIFY COLUMN user_event_type ENUM(
+    'ACCOUNT_CREATED',
+    'AD_WATCHED',
+    'CASE_STARTED',
+    'CASE_COMPLETED',
+    'SUBSCRIPTIONS',
+    'LOGIN',
+    'LOGOUT',
+    'DELETE_ACCOUNT',
+    'CHANGE_PASSWORD',
+    'RESET_PASSWORD'
+) NOT NULL;

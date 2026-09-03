@@ -31,7 +31,7 @@ public class UserEvent {
     @Column(name = "user_event_type", nullable = false)
     private UserEventType userEventType;
 
-    @Column(name = "metadata", nullable = false)
+    @Column(name = "metadata")
     private String metadata;
 
     @CreatedDate

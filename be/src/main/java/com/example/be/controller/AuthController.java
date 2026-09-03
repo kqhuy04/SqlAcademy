@@ -43,7 +43,6 @@ public class AuthController {
     }
 
 
-
     @GetMapping("/users/me")
     public ResponseEntity<?> getMe(@AuthenticationPrincipal CustomUserDetails principal) {
         return ResponseEntity.ok(principal);

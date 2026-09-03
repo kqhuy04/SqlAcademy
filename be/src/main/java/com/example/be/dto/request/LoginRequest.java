@@ -11,4 +11,5 @@ public record LoginRequest(
 
         @NotBlank
         @Pattern(regexp = "^(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).{8,}$", message = "Password need at least 1 upcase letter, 1 number, 1 special character ")
-        String password) { }
+        String password) {
+}

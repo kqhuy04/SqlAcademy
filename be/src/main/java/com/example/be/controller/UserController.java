@@ -1,7 +1,6 @@
 package com.example.be.controller;
 
 import com.example.be.dto.request.DeleteUserRequest;
-import com.example.be.dto.request.RefreshTokenRequest;
 import com.example.be.dto.request.SubscriptionRequest;
 import com.example.be.dto.response.DeleteUserResponse;
 import com.example.be.dto.response.SubscriptionResponse;
@@ -23,6 +22,7 @@ public class UserController {
         this.userService = userService;
         this.refreshTokenService = refreshTokenService;
     }
+
     @PatchMapping("/me/subscriptions")
     public ResponseEntity<SubscriptionResponse> subscribe(@Valid @RequestBody SubscriptionRequest subscriptionRequest) {
         return ResponseEntity.ok(userService.purchase(subscriptionRequest));

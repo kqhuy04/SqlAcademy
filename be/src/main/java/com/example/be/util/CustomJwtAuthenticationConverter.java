@@ -1,6 +1,6 @@
 package com.example.be.util;
 
-import com.example.be.dto.CustomUserDetails;
+import com.example.be.dto.CustomUserDetail;
 import com.example.be.enums.Role;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -15,9 +15,10 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
     public AbstractAuthenticationToken convert(Jwt jwt) {
         String username = jwt.getSubject();
         Long userId = jwt.getClaim("userId");
-        String role = jwt.getClaim("role");   // nhớ: đã đổi key "roles" → "role" ở bước trước
+        String role = jwt.getClaim("role");
+        Boolean isPuchased = jwt.getClaim("isPuchased");
 
-        CustomUserDetails principal = new CustomUserDetails(username, Role.valueOf(role), userId);
+        CustomUserDetail principal = new CustomUserDetail(username, Role.valueOf(role), userId, isPuchased);
 
         return new UsernamePasswordAuthenticationToken(
                 principal,

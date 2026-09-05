@@ -1,6 +1,6 @@
 package com.example.be.service;
 
-import com.example.be.dto.CustomUserDetails;
+import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.entity.RefreshToken;
@@ -85,7 +85,7 @@ public class UserService implements UserDetailsService {
     public LoginResponse readUser(LoginRequest loginRequest) {
         User user = userRepository.findByUsername(loginRequest.username()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
-            CustomUserDetails userDetails = new CustomUserDetails(user.getUsername(), user.getRole(), user.getId());
+            CustomUserDetail userDetails = new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null);
             String accessToken = tokenUtil.generateAccessToken(userDetails);
             String refreshToken = refreshTokenService.generateRefreshToken(user);
             userEventService.logEvent(user, UserEventType.LOGIN, "");
@@ -132,7 +132,7 @@ public class UserService implements UserDetailsService {
                 List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(user.getId());
                 refreshTokenList.stream().forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
 
-                String accessToken = tokenUtil.generateAccessToken(new CustomUserDetails(user.getUsername(), user.getRole(), user.getId()));
+                String accessToken = tokenUtil.generateAccessToken(new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null));
                 String refreshToken = refreshTokenService.generateRefreshToken(user);
                 userEventService.logEvent(user, UserEventType.CHANGE_PASSWORD, "");
                 return new ChangePasswordResponse("Your password changed successfully", accessToken, refreshToken);

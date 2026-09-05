@@ -15,10 +15,11 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
-public class CustomUserDetails implements UserDetails {
+public class CustomUserDetail implements UserDetails {
     private String username;
     private Role role;
     private Long userId;
+    private Boolean isPurchased;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -34,4 +35,5 @@ public class CustomUserDetails implements UserDetails {
     public String getUsername() {
         return username;
     }
+
 }

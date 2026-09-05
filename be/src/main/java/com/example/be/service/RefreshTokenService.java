@@ -1,6 +1,6 @@
 package com.example.be.service;
 
-import com.example.be.dto.CustomUserDetails;
+import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.LogoutRequest;
 import com.example.be.dto.request.RefreshTokenRequest;
 import com.example.be.dto.response.LogoutResponse;
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 @Service
 public class RefreshTokenService {
@@ -51,7 +50,7 @@ public class RefreshTokenService {
         if (user == null) {
             throw new UserNotFoundException("User not found");
         }
-        String accessToken = tokenUtil.generateAccessToken(new CustomUserDetails(user.getUsername(), user.getRole(), user.getId()));
+        String accessToken = tokenUtil.generateAccessToken(new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null));
         return new RefreshTokenResponse("User get back Access Token successfully", accessToken);
     }
 

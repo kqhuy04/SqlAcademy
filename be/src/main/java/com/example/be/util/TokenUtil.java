@@ -1,7 +1,7 @@
 package com.example.be.util;
 
 import com.example.be.config.JwtConfig;
-import com.example.be.dto.CustomUserDetails;
+import com.example.be.dto.CustomUserDetail;
 import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Component;
 
@@ -18,11 +18,12 @@ public class TokenUtil {
         this.jwtConfig = jwtConfig;
     }
 
-    public String generateAccessToken(CustomUserDetails userDetails) {
+    public String generateAccessToken(CustomUserDetail userDetails) {
         return Jwts.builder().
                 subject(userDetails.getUsername())
                 .claim("role", userDetails.getRole().name())
                 .claim("userId", userDetails.getUserId())
+                .claim("isPurchased", userDetails.getIsPurchased())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtConfig.getExpiration() * 1000))
                 .signWith(jwtConfig.jwtSigningKey(), Jwts.SIG.HS256)

@@ -1,6 +1,6 @@
 package com.example.be.controller;
 
-import com.example.be.dto.CustomUserDetails;
+import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.service.RefreshTokenService;
@@ -44,7 +44,7 @@ public class AuthController {
 
 
     @GetMapping("/users/me")
-    public ResponseEntity<?> getMe(@AuthenticationPrincipal CustomUserDetails principal) {
+    public ResponseEntity<?> getMe(@AuthenticationPrincipal CustomUserDetail principal) {
         return ResponseEntity.ok(principal);
     }
 

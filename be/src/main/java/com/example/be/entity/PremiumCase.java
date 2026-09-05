@@ -40,7 +40,7 @@ public class PremiumCase {
     @Column(name = "xp_reward")
     private Integer xpReward;
 
-    @Column(name = "bade_name")
+    @Column(name = "badge_name")
     private String badgeName;
 
     @Column(name = "badge_icon")

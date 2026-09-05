@@ -35,8 +35,8 @@ class UserServiceTest {
     void shouldCreateUser_whenUserIsNotFound_inRegister() {
         RegisterRequest registerRequest = new RegisterRequest("huy125634", "khongquanghuy.ai@gmail.com", "Huy@2004");
         when(userRepository.existsByUsername(registerRequest.username())).thenReturn(false);
-        when(userRepository.existsByEmail(registerRequest.email())).thenReturn(false))
-        when(userRepository.save(any(User.class))).thenReturn(User.builder().username("huy1234").email("khongquanghuy.ai@gmail.com")passwordHash("Huy@2004").build());
+        when(userRepository.existsByEmail(registerRequest.email())).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenReturn(User.builder().username("huy1234").email("khongquanghuy.ai@gmail.com").passwordHash("Huy@2004").build());
         when(passwordEncoder.encode(anyString())).thenReturn("Huy@2004");
         RegisterResponse registerResponse = userService.createUser(registerRequest);
         verify(userRepository, times(1)).save(any(User.class));

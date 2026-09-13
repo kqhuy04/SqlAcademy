@@ -1,9 +1,11 @@
 package com.example.be.dto.response;
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder
 
-public record PremiumCaseItemResponse(
+public record PremiumCaseDTO(
         Long id,
         String title,
         String description,
@@ -15,6 +17,9 @@ public record PremiumCaseItemResponse(
         String badgeName,
         String badgeIcon,
         Integer questionCount,
-        boolean isUnlocked
+        boolean isUnlocked,
+        List<CaseQuestionDTO> caseQuestionDTOList
+
+        
 ) {
 }

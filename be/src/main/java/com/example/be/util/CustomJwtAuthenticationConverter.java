@@ -16,9 +16,9 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
         String username = jwt.getSubject();
         Long userId = jwt.getClaim("userId");
         String role = jwt.getClaim("role");
-        Boolean isPuchased = jwt.getClaim("isPuchased");
+        Boolean isPurchased = jwt.getClaim("isPurchased");
 
-        CustomUserDetail principal = new CustomUserDetail(username, Role.valueOf(role), userId, isPuchased);
+        CustomUserDetail principal = new CustomUserDetail(username, Role.valueOf(role), userId, isPurchased);
 
         return new UsernamePasswordAuthenticationToken(
                 principal,

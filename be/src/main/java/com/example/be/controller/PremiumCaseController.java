@@ -1,11 +1,10 @@
 package com.example.be.controller;
 
+import com.example.be.dto.response.PremiumCaseDTO;
 import com.example.be.dto.response.PremiumCaseListResponse;
 import com.example.be.service.PremiumCaseService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -18,8 +17,13 @@ public class PremiumCaseController {
     }
 
     @GetMapping("/premium_cases")
-    public ResponseEntity<PremiumCaseListResponse> getAllPremiuCases() {
+    public ResponseEntity<PremiumCaseListResponse> getAllPremiumCases() {
         return ResponseEntity.ok(premiumCaseService.getPremiumCaseList());
+    }
+
+    @GetMapping("/premium_cases/{id}")
+    public ResponseEntity<PremiumCaseDTO> getPremiumCase(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(premiumCaseService.getPremiumCase(id));
     }
 
 }

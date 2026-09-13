@@ -13,6 +13,7 @@ import com.example.be.repository.RefreshTokenRepository;
 import com.example.be.repository.UserEventRepository;
 import com.example.be.repository.UserRepository;
 import com.example.be.util.PasswordGenerator;
+import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;
@@ -97,52 +98,34 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public SubscriptionResponse purchase(SubscriptionRequest subscriptionRequest) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UnauthenticatedException("User is not authenticated");
-        }
-
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            String username = userDetails.getUsername();
-            User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            user.setPremiumPurchasedAt(LocalDateTime.now());
-            userRepository.save(user);
-            userEventService.logEvent(user, UserEventType.SUBSCRIPTIONS, "");
-        }
-
+        UserDetails userDetails = SecurityUtil.getCurrentUser();
+        String username = userDetails.getUsername();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.setPremiumPurchasedAt(LocalDateTime.now());
+        userRepository.save(user);
+        userEventService.logEvent(user, UserEventType.SUBSCRIPTIONS, "");
         return new SubscriptionResponse("Your subscriptions has been activated");
     }
 
     @Transactional
     public ChangePasswordResponse changePassword(ChangePasswordRequest changePasswordRequest) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UnauthenticatedException("User is not authenticated");
-        }
+        UserDetails userDetails = SecurityUtil.getCurrentUser();
+        String username = userDetails.getUsername();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (passwordEncoder.matches(changePasswordRequest.oldPassword(), user.getPasswordHash())) {
+            user.setPasswordHash(passwordEncoder.encode(changePasswordRequest.newPassword()));
+            userRepository.save(user);
 
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            String username = userDetails.getUsername();
-            User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            if (passwordEncoder.matches(changePasswordRequest.oldPassword(), user.getPasswordHash())) {
-                user.setPasswordHash(passwordEncoder.encode(changePasswordRequest.newPassword()));
-                userRepository.save(user);
+            List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(user.getId());
+            refreshTokenList.stream().forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
 
-                List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(user.getId());
-                refreshTokenList.stream().forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
-
-                String accessToken = tokenUtil.generateAccessToken(new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null));
-                String refreshToken = refreshTokenService.generateRefreshToken(user);
-                userEventService.logEvent(user, UserEventType.CHANGE_PASSWORD, "");
-                return new ChangePasswordResponse("Your password changed successfully", accessToken, refreshToken);
-            } else {
-                throw new WrongPasswordException("Wrong password");
-            }
+            String accessToken = tokenUtil.generateAccessToken(new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null));
+            String refreshToken = refreshTokenService.generateRefreshToken(user);
+            userEventService.logEvent(user, UserEventType.CHANGE_PASSWORD, "");
+            return new ChangePasswordResponse("Your password changed successfully", accessToken, refreshToken);
         } else {
-            throw new UnauthenticatedException("User is not authenticated");
+            throw new WrongPasswordException("Wrong password");
         }
-
     }
 
     @Transactional
@@ -162,29 +145,20 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public @Nullable DeleteUserResponse deleteUser(DeleteUserRequest deleteUserRequest) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UnauthenticatedException("User is not authenticated");
-        }
-
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            String username = userDetails.getUsername();
-            User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            if (passwordEncoder.matches(deleteUserRequest.password(), user.getPasswordHash())) {
-                Long id = user.getId();
-                List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
-                refreshTokenList.stream()
-                        .forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
-                List<UserEvent> userEventList = userEventRepository.findByUserId(id);
-                userEventList.stream()
-                        .forEach(userEvent -> userEventRepository.delete(userEvent));
-                userRepository.delete(user);
-            } else {
-                throw new WrongPasswordException("Password is wrong");
-            }
+        UserDetails userDetails = SecurityUtil.getCurrentUser();
+        String username = userDetails.getUsername();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        if (passwordEncoder.matches(deleteUserRequest.password(), user.getPasswordHash())) {
+            Long id = user.getId();
+            List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
+            refreshTokenList.stream()
+                    .forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
+            List<UserEvent> userEventList = userEventRepository.findByUserId(id);
+            userEventList.stream()
+                    .forEach(userEvent -> userEventRepository.delete(userEvent));
+            userRepository.delete(user);
         } else {
-            throw new UnauthenticatedException("User is not authenticated");
+            throw new WrongPasswordException("Password is wrong");
         }
         return new DeleteUserResponse("Account deleted successfully");
     }

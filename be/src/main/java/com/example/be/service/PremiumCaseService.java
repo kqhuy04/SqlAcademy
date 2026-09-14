@@ -1,9 +1,11 @@
 package com.example.be.service;
 
 import com.example.be.dto.CustomUserDetail;
+import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.response.CaseQuestionDTO;
 import com.example.be.dto.response.PremiumCaseDTO;
 import com.example.be.dto.response.PremiumCaseListResponse;
+import com.example.be.dto.response.SQLQueryResponse;
 import com.example.be.entity.CaseQuestion;
 import com.example.be.entity.PremiumCase;
 import com.example.be.exception.PremiumCaseNotFoundException;
@@ -11,6 +13,7 @@ import com.example.be.exception.UnauthenticatedException;
 import com.example.be.repository.CaseQuestionRepository;
 import com.example.be.repository.PremiumCaseRepository;
 import com.example.be.util.SecurityUtil;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,9 +29,12 @@ public class PremiumCaseService {
 
     private final CaseQuestionRepository caseQuestionRepository;
 
-    PremiumCaseService(PremiumCaseRepository premiumCaseRepository, CaseQuestionRepository caseQuestionRepository) {
+    private final JdbcTemplate jdbcTemplate;
+
+    PremiumCaseService(PremiumCaseRepository premiumCaseRepository, CaseQuestionRepository caseQuestionRepository, JdbcTemplate jdbcTemplate) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public PremiumCaseListResponse getPremiumCaseList() {
@@ -81,5 +87,11 @@ public class PremiumCaseService {
                 .caseQuestionDTOList(list)
                 .build();
 
+    }
+
+    public SQLQueryResponse runQuery(SQLQueryRequest sqlQueryRequest) {
+        jdbcTemplate.execute("USE case_" + sqlQueryRequest.caseId());
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sqlQueryRequest.query());
+        return new SQLQueryResponse(rows);
     }
 }

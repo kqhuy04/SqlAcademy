@@ -1,8 +1,11 @@
 package com.example.be.controller;
 
+import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.response.PremiumCaseDTO;
 import com.example.be.dto.response.PremiumCaseListResponse;
+import com.example.be.dto.response.SQLQueryResponse;
 import com.example.be.service.PremiumCaseService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,4 +29,8 @@ public class PremiumCaseController {
         return ResponseEntity.ok(premiumCaseService.getPremiumCase(id));
     }
 
+    @PostMapping("/premium_cases/run")
+    public ResponseEntity<SQLQueryResponse> runQuery(@RequestBody @Valid SQLQueryRequest sqlQueryRequest) {
+        return ResponseEntity.ok(premiumCaseService.runQuery(sqlQueryRequest));
+    }
 }

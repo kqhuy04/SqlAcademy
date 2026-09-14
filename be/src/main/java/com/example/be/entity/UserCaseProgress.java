@@ -32,7 +32,7 @@ public class UserCaseProgress {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "question_id", nullable = false)
-    private CaseQuestion question;
+    private CaseQuestion caseQuestion;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;

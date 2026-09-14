@@ -16,7 +16,7 @@ public class SQLQueryValidator implements ConstraintValidator<SQLQueryValidation
 
     @Override
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
-        if (s.isBlank() || s == null) return false;
+        if (s == null || s.isBlank()) return false;
 
         String normalized = s.trim().toUpperCase();
 //        if (!normalized.startsWith("SELCECT") && !normalized.startsWith("WITH")) {

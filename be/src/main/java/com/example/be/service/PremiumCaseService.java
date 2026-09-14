@@ -2,21 +2,20 @@ package com.example.be.service;
 
 import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.SQLQueryRequest;
-import com.example.be.dto.response.CaseQuestionDTO;
-import com.example.be.dto.response.PremiumCaseDTO;
-import com.example.be.dto.response.PremiumCaseListResponse;
-import com.example.be.dto.response.SQLQueryResponse;
+import com.example.be.dto.request.EndCaseRequest;
+import com.example.be.dto.response.*;
 import com.example.be.entity.CaseQuestion;
 import com.example.be.entity.PremiumCase;
+import com.example.be.entity.User;
+import com.example.be.entity.UserCaseProgress;
 import com.example.be.exception.PremiumCaseNotFoundException;
-import com.example.be.exception.UnauthenticatedException;
+import com.example.be.exception.UserNotFoundException;
 import com.example.be.repository.CaseQuestionRepository;
 import com.example.be.repository.PremiumCaseRepository;
+import com.example.be.repository.UserCaseProgressRepository;
+import com.example.be.repository.UserRepository;
 import com.example.be.util.SecurityUtil;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,10 +30,20 @@ public class PremiumCaseService {
 
     private final JdbcTemplate jdbcTemplate;
 
-    PremiumCaseService(PremiumCaseRepository premiumCaseRepository, CaseQuestionRepository caseQuestionRepository, JdbcTemplate jdbcTemplate) {
+    private final UserRepository userRepository;
+
+    private final UserCaseProgressRepository userCaseProgressRepository;
+
+    PremiumCaseService(PremiumCaseRepository premiumCaseRepository,
+                       CaseQuestionRepository caseQuestionRepository,
+                       JdbcTemplate jdbcTemplate,
+                       UserCaseProgressRepository userCaseProgressRepository,
+                       UserRepository userRepository) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.userCaseProgressRepository = userCaseProgressRepository;
+        this.userRepository = userRepository;
     }
 
     public PremiumCaseListResponse getPremiumCaseList() {
@@ -46,6 +55,7 @@ public class PremiumCaseService {
                                 .title(premiumCase.getTitle())
                                 .description(premiumCase.getDescription())
                                 .difficulty(premiumCase.getDifficulty())
+                                .hint(premiumCase.getHint())
                                 .orderIndex(premiumCase.getOrderIndex())
                                 .baseScore(premiumCase.getBaseScore())
                                 .xpReward(premiumCase.getXpReward())
@@ -65,7 +75,7 @@ public class PremiumCaseService {
         List<CaseQuestionDTO> list = caseQuestionList.stream().map(
                 caseQuestion -> CaseQuestionDTO.builder()
                         .orderIndex(caseQuestion.getOrderIndex())
-                        .questionEn(caseQuestion.getQuestionVi())
+                        .questionVi(caseQuestion.getQuestionVi())
                         .questionEn(caseQuestion.getQuestionEn())
                         .hint1(caseQuestion.getHint1())
                         .hint2(caseQuestion.getHint2())
@@ -77,6 +87,7 @@ public class PremiumCaseService {
                 .title(premiumCase.getTitle())
                 .description(premiumCase.getDescription())
                 .difficulty(premiumCase.getDifficulty())
+                .hint(premiumCase.getHint())
                 .orderIndex(premiumCase.getOrderIndex())
                 .baseScore(premiumCase.getBaseScore())
                 .xpReward(premiumCase.getXpReward())
@@ -93,5 +104,20 @@ public class PremiumCaseService {
         jdbcTemplate.execute("USE case_" + sqlQueryRequest.caseId());
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sqlQueryRequest.query());
         return new SQLQueryResponse(rows);
+    }
+
+    public EndCaseResponse endCase(EndCaseRequest endCaseRequest) {
+        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
+        User user = userRepository.getReferenceById(customUserDetail.getUserId());
+        PremiumCase premiumCase = premiumCaseRepository.getReferenceById(endCaseRequest.caseId());
+        CaseQuestion caseQuestion = caseQuestionRepository.getReferenceById(endCaseRequest.caseQuestion());
+        UserCaseProgress userCaseProgress = UserCaseProgress.builder()
+                .user(user)
+                .premiumCase(premiumCase)
+                .caseQuestion(caseQuestion)
+                .status("Completed")
+                .build();
+        userCaseProgressRepository.save(userCaseProgress);
+        return new EndCaseResponse("Success");
     }
 }

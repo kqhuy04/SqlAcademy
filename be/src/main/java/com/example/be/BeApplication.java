@@ -12,4 +12,5 @@ BeApplication {
         SpringApplication.run(BeApplication.class, args);
     }
 
+
 }

@@ -20,5 +20,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByPremiumPurchasedAtIsNotNull();
 
-
+    List<User> findAllByOrderByTotalScoreDesc();
 }

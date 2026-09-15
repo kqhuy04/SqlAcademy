@@ -1,14 +1,14 @@
 package com.example.be.controller;
 
-import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.service.RefreshTokenService;
 import com.example.be.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -17,7 +17,6 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
 
     AuthController(UserService userService, RefreshTokenService refreshTokenService) {
-
         this.userService = userService;
         this.refreshTokenService = refreshTokenService;
     }
@@ -42,10 +41,19 @@ public class AuthController {
         return ResponseEntity.ok(userService.resetPassword(resetPasswordRequest));
     }
 
-
     @GetMapping("/users/me")
-    public ResponseEntity<?> getMe(@AuthenticationPrincipal CustomUserDetail principal) {
-        return ResponseEntity.ok(principal);
+    public ResponseEntity<UserProfileResponse> getMe() {
+        return ResponseEntity.ok(userService.getProfile());
+    }
+
+    @GetMapping("/users/me/progress")
+    public ResponseEntity<List<UserProgressResponse>> getProgress() {
+        return ResponseEntity.ok(userService.getProgress());
+    }
+
+    @GetMapping("/leaderboard")
+    public ResponseEntity<List<LeaderboardEntryResponse>> getLeaderboard() {
+        return ResponseEntity.ok(userService.getLeaderboard());
     }
 
     @PostMapping("/auth/refresh")
@@ -57,6 +65,4 @@ public class AuthController {
     public ResponseEntity<LogoutResponse> logout(@Valid @RequestBody LogoutRequest logoutRequest) {
         return ResponseEntity.ok(refreshTokenService.logout(logoutRequest));
     }
-
-
 }

@@ -5,19 +5,19 @@ import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.entity.RefreshToken;
 import com.example.be.entity.User;
+import com.example.be.entity.UserCaseProgress;
 import com.example.be.entity.UserEvent;
 import com.example.be.enums.Role;
 import com.example.be.enums.UserEventType;
 import com.example.be.exception.*;
 import com.example.be.repository.RefreshTokenRepository;
+import com.example.be.repository.UserCaseProgressRepository;
 import com.example.be.repository.UserEventRepository;
 import com.example.be.repository.UserRepository;
 import com.example.be.util.PasswordGenerator;
 import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
 import org.jspecify.annotations.Nullable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,14 +35,11 @@ public class UserService implements UserDetailsService {
     private final TokenUtil tokenUtil;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
-
     private final RefreshTokenRepository refreshTokenRepository;
-
     private final EmailService emailService;
-
     private final UserEventService userEventService;
     private final UserEventRepository userEventRepository;
-
+    private final UserCaseProgressRepository userCaseProgressRepository;
 
     UserService(UserRepository userRepository,
                 TokenUtil tokenUtil,
@@ -51,7 +48,8 @@ public class UserService implements UserDetailsService {
                 RefreshTokenService refreshTokenService,
                 EmailService emailService,
                 UserEventService userEventService,
-                UserEventRepository userEventRepository) {
+                UserEventRepository userEventRepository,
+                UserCaseProgressRepository userCaseProgressRepository) {
 
         this.userRepository = userRepository;
         this.tokenUtil = tokenUtil;
@@ -61,6 +59,7 @@ public class UserService implements UserDetailsService {
         this.emailService = emailService;
         this.userEventService = userEventService;
         this.userEventRepository = userEventRepository;
+        this.userCaseProgressRepository = userCaseProgressRepository;
     }
 
     @Transactional
@@ -150,12 +149,11 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
         if (passwordEncoder.matches(deleteUserRequest.password(), user.getPasswordHash())) {
             Long id = user.getId();
+            userCaseProgressRepository.deleteByUserId(id);
             List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
-            refreshTokenList.stream()
-                    .forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
+            refreshTokenList.forEach(refreshTokenRepository::delete);
             List<UserEvent> userEventList = userEventRepository.findByUserId(id);
-            userEventList.stream()
-                    .forEach(userEvent -> userEventRepository.delete(userEvent));
+            userEventList.forEach(userEventRepository::delete);
             userRepository.delete(user);
         } else {
             throw new WrongPasswordException("Password is wrong");
@@ -163,6 +161,37 @@ public class UserService implements UserDetailsService {
         return new DeleteUserResponse("Account deleted successfully");
     }
 
+    public UserProfileResponse getProfile() {
+        CustomUserDetail principal = SecurityUtil.getCurrentUser();
+        User user = userRepository.findById(principal.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return UserProfileResponse.from(user);
+    }
+
+    public List<UserProgressResponse> getProgress() {
+        CustomUserDetail principal = SecurityUtil.getCurrentUser();
+        List<UserCaseProgress> progressList = userCaseProgressRepository.findByUserId(principal.getUserId());
+        return progressList.stream().map(p -> new UserProgressResponse(
+                p.getPremiumCase().getId(),
+                p.getPremiumCase().getTitle(),
+                p.getPremiumCase().getDifficulty(),
+                p.getCaseQuestion().getId(),
+                p.getCaseQuestion().getOrderIndex(),
+                p.getScoreEarned(),
+                p.getHintsUsed(),
+                p.getAttempts(),
+                p.getCompletedAt()
+        )).toList();
+    }
+
+    public List<LeaderboardEntryResponse> getLeaderboard() {
+        List<User> users = userRepository.findAllByOrderByTotalScoreDesc();
+        int[] rank = {1};
+        return users.stream().map(u -> {
+            long casesCompleted = userCaseProgressRepository.countByUserId(u.getId());
+            return new LeaderboardEntryResponse(rank[0]++, u.getUsername(), u.getTotalScore(), u.getTotalXp(), (int) casesCompleted);
+        }).toList();
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

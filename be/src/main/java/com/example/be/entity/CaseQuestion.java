@@ -40,4 +40,7 @@ public class CaseQuestion {
 
     @Column(name = "skill_tags")
     private String skillTags;
+
+    @Column(name = "expected_output")
+    private String expectedOutput;
 }

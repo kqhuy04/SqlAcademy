@@ -18,6 +18,16 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(CaseQuestionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCaseQuestionNotFoundException(CaseQuestionNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(404, ex.getMessage(), LocalDateTime.now()));
+    }
+
+    @ExceptionHandler(SubscriptionNotPurchasedException.class)
+    public ResponseEntity<ErrorResponse> handleSubscriptionNotPurchasedException(SubscriptionNotPurchasedException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(404, ex.getMessage(), LocalDateTime.now()));
+    }
+
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleUsernameAlreadyExistsException(UsernameAlreadyExistsException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(409, ex.getMessage(), LocalDateTime.now()));

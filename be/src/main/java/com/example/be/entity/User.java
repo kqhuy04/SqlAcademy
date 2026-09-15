@@ -35,6 +35,17 @@ public class User {
     @Column(name = "premium_purchased_at")
     private LocalDateTime premiumPurchasedAt;
 
+    @Column(name = "total_xp", nullable = false)
+    @Builder.Default
+    private Integer totalXp = 0;
+
+    @Column(name = "total_score", nullable = false)
+    @Builder.Default
+    private Integer totalScore = 0;
+
+    @Column(name = "badges_earned", columnDefinition = "TEXT")
+    private String badgesEarned;
+
     @Column(name = "role", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private Role role;

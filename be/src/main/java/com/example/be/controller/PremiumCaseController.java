@@ -36,8 +36,9 @@ public class PremiumCaseController {
         return ResponseEntity.ok(premiumCaseService.runQuery(sqlQueryRequest));
     }
 
-    @PostMapping("/premium_cases/start")
+    @PostMapping("/premium_cases/end")
     public ResponseEntity<EndCaseResponse> startCase(@RequestBody EndCaseRequest endCaseRequest) {
         return ResponseEntity.ok(premiumCaseService.endCase(endCaseRequest));
     }
+
 }

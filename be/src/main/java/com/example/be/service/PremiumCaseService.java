@@ -4,18 +4,12 @@ import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.EndCaseRequest;
 import com.example.be.dto.response.*;
-import com.example.be.entity.CaseQuestion;
-import com.example.be.entity.PremiumCase;
-import com.example.be.entity.User;
-import com.example.be.entity.UserCaseProgress;
+import com.example.be.entity.*;
 import com.example.be.exception.CaseQuestionNotFoundException;
 import com.example.be.exception.PremiumCaseNotFoundException;
 import com.example.be.exception.SubscriptionNotPurchasedException;
 import com.example.be.exception.UserNotFoundException;
-import com.example.be.repository.CaseQuestionRepository;
-import com.example.be.repository.PremiumCaseRepository;
-import com.example.be.repository.UserCaseProgressRepository;
-import com.example.be.repository.UserRepository;
+import com.example.be.repository.*;
 import com.example.be.util.SecurityUtil;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -24,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class PremiumCaseService {
@@ -38,19 +33,27 @@ public class PremiumCaseService {
 
     private final UserCaseProgressRepository userCaseProgressRepository;
 
+    private final CaseTableRepository caseTableRepository;
+
+    private final CaseColumnRepository caseColumnRepository;
+
     PremiumCaseService(PremiumCaseRepository premiumCaseRepository,
                        CaseQuestionRepository caseQuestionRepository,
                        JdbcTemplate jdbcTemplate,
                        UserCaseProgressRepository userCaseProgressRepository,
-                       UserRepository userRepository) {
+                       UserRepository userRepository,
+                       CaseTableRepository caseTableRepository,
+                       CaseColumnRepository caseColumnRepository) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.userCaseProgressRepository = userCaseProgressRepository;
         this.userRepository = userRepository;
+        this.caseTableRepository = caseTableRepository;
+        this.caseColumnRepository = caseColumnRepository;
     }
 
-    public PremiumCaseListResponse getPremiumCaseList() {
+    public PremiumCaseListResponse getPremiumCases() {
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
         List<PremiumCase> premiumCaseList = premiumCaseRepository.findAll();
         return new PremiumCaseListResponse(premiumCaseList.stream().map(
@@ -81,6 +84,7 @@ public class PremiumCaseService {
         }
         List<CaseQuestionDTO> list = caseQuestionList.stream().map(
                 caseQuestion -> CaseQuestionDTO.builder()
+                        .id(caseQuestion.getId())
                         .orderIndex(caseQuestion.getOrderIndex())
                         .questionVi(caseQuestion.getQuestionVi())
                         .questionEn(caseQuestion.getQuestionEn())
@@ -176,5 +180,44 @@ public class PremiumCaseService {
         userRepository.save(user);
 
         return new EndCaseResponse("Correct!", true, scoreEarned, xpEarned);
+    }
+
+    public GetTableResponse getTables(Long id) {
+        if (!premiumCaseRepository.existsById(id)) {
+            throw new PremiumCaseNotFoundException("Premium Case not found");
+        }
+
+        List<CaseTable> caseTableList = caseTableRepository.findByPremiumCaseId(id);
+        List<CaseColumn> allColumns = caseColumnRepository.findByCaseTablePremiumCaseId(id);
+        Map<Long, List<CaseColumn>> columnsByTableId = allColumns.stream()
+                .collect(Collectors.groupingBy(c -> c.getCaseTable().getId()));
+
+        return new GetTableResponse(
+                caseTableList
+                        .stream()
+                        .map(caseTable -> TableDTO
+                                .builder()
+                                .tableName(caseTable.getTableName())
+                                .descriptionVi(caseTable.getDescriptionVi())
+                                .descriptionEn(caseTable.getDescriptionEn())
+                                .sampleData(caseTable.getSampleData())
+                                .columnDTOList(
+                                        columnsByTableId.getOrDefault(caseTable.getId(), List.of())
+                                                .stream()
+                                                .map(caseColumn -> ColumnDTO
+                                                        .builder()
+                                                        .columnName(caseColumn.getColumnName())
+                                                        .dataType(caseColumn.getDataType())
+                                                        .isPrimaryKey(caseColumn.getIsPrimaryKey())
+                                                        .descriptionVi(caseColumn.getDescriptionVi())
+                                                        .descriptionEn(caseColumn.getDescriptionEn())
+                                                        .sampleValues(caseColumn.getSampleValues())
+                                                        .build()
+                                                )
+                                                .toList()
+                                )
+                                .build())
+                        .toList()
+        );
     }
 }

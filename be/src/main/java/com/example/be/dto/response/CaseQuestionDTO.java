@@ -4,6 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record CaseQuestionDTO(
+        Long id,
         Integer orderIndex,
         String questionVi,
         String questionEn,

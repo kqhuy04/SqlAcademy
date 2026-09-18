@@ -1,12 +1,11 @@
-package com.example.be.validator;
+package com.example.be.annotationImp;
 
-import com.example.be.annotation.SQLQueryValidation;
+import com.example.be.annotation.SQLQueryValid;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-
 import java.util.List;
 
-public class SQLQueryValidator implements ConstraintValidator<SQLQueryValidation, String> {
+public class SQLQueryValidator implements ConstraintValidator<SQLQueryValid, String> {
     private static final List<String> FORBIDDEN_KEYWORDS = List.of(
             "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
             "TRUNCATE", "EXEC", "EXECUTE", "GRANT", "REVOKE",

@@ -1,4 +1,4 @@
 package com.example.be.dto.request;
 
-public class SubscriptionRequest {
+public record SubscriptionRequest() {
 }

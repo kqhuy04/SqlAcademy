@@ -36,6 +36,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(409, ex.getMessage(), LocalDateTime.now()));
     }
 
+    @ExceptionHandler(DuplicateRequestException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateRequestException(DuplicateRequestException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(409, ex.getMessage(), LocalDateTime.now()));
+    }
 
 
     @ExceptionHandler(UserNotFoundException.class)

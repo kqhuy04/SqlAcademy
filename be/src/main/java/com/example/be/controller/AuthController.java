@@ -1,5 +1,6 @@
 package com.example.be.controller;
 
+import com.example.be.annotation.Idempotent;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.service.RefreshTokenService;
@@ -21,6 +22,7 @@ public class AuthController {
         this.refreshTokenService = refreshTokenService;
     }
 
+    @Idempotent
     @PostMapping("/auth/register")
     public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
         return ResponseEntity.ok(userService.createUser(registerRequest));
@@ -31,11 +33,13 @@ public class AuthController {
         return ResponseEntity.ok(userService.readUser(loginRequest));
     }
 
+    @Idempotent
     @PatchMapping("/users/me/password")
     public ResponseEntity<ChangePasswordResponse> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         return ResponseEntity.ok(userService.changePassword(changePasswordRequest));
     }
 
+    @Idempotent
     @PostMapping("/auth/reset-password")
     public ResponseEntity<ResetPasswordResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         return ResponseEntity.ok(userService.resetPassword(resetPasswordRequest));

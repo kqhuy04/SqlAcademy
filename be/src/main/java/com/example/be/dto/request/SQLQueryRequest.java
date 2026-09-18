@@ -1,6 +1,6 @@
 package com.example.be.dto.request;
 
-import com.example.be.annotation.SQLQueryValidation;
+import com.example.be.annotation.SQLQueryValid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +11,7 @@ public record SQLQueryRequest(
         @Max(50)
         Long caseId,
 
-        @SQLQueryValidation
+        @SQLQueryValid
         String query
 ) {
 }

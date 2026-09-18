@@ -1,5 +1,6 @@
 package com.example.be.controller;
 
+import com.example.be.annotation.Idempotent;
 import com.example.be.dto.request.DeleteUserRequest;
 import com.example.be.dto.request.SubscriptionRequest;
 import com.example.be.dto.response.DeleteUserResponse;
@@ -23,6 +24,7 @@ public class UserController {
         this.refreshTokenService = refreshTokenService;
     }
 
+    @Idempotent
     @PatchMapping("/me/subscriptions")
     public ResponseEntity<SubscriptionResponse> subscribe(@Valid @RequestBody SubscriptionRequest subscriptionRequest) {
         return ResponseEntity.ok(userService.purchase(subscriptionRequest));

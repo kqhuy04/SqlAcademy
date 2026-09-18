@@ -1,5 +1,6 @@
 package com.example.be.controller;
 
+import com.example.be.annotation.Idempotent;
 import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.EndCaseRequest;
 import com.example.be.dto.response.*;
@@ -32,13 +33,15 @@ public class PremiumCaseController {
         return ResponseEntity.ok(premiumCaseService.getPremiumCase(id));
     }
 
+    @Idempotent
     @PostMapping("/premium_cases/run")
     public ResponseEntity<SQLQueryResponse> runQuery(@RequestBody @Valid SQLQueryRequest sqlQueryRequest) {
         return ResponseEntity.ok(premiumCaseService.runQuery(sqlQueryRequest));
     }
 
+    @Idempotent
     @PostMapping("/premium_cases/end")
-    public ResponseEntity<EndCaseResponse> startCase(@RequestBody EndCaseRequest endCaseRequest) {
+    public ResponseEntity<EndCaseResponse> endCase(@RequestBody EndCaseRequest endCaseRequest) {
         return ResponseEntity.ok(premiumCaseService.endCase(endCaseRequest));
     }
 

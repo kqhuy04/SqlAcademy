@@ -5,17 +5,19 @@ import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.EndCaseRequest;
 import com.example.be.dto.response.*;
 import com.example.be.entity.*;
-import com.example.be.exception.CaseQuestionNotFoundException;
-import com.example.be.exception.PremiumCaseNotFoundException;
-import com.example.be.exception.SubscriptionNotPurchasedException;
-import com.example.be.exception.UserNotFoundException;
+import com.example.be.exception.*;
 import com.example.be.repository.*;
 import com.example.be.util.SecurityUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
+import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,13 +39,16 @@ public class PremiumCaseService {
 
     private final CaseColumnRepository caseColumnRepository;
 
+    private final DataSource sandboxDataSource;
+
     PremiumCaseService(PremiumCaseRepository premiumCaseRepository,
                        CaseQuestionRepository caseQuestionRepository,
                        JdbcTemplate jdbcTemplate,
                        UserCaseProgressRepository userCaseProgressRepository,
                        UserRepository userRepository,
                        CaseTableRepository caseTableRepository,
-                       CaseColumnRepository caseColumnRepository) {
+                       CaseColumnRepository caseColumnRepository,
+                       @Qualifier("sandboxDataSource") DataSource sandboxDataSource) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
         this.jdbcTemplate = jdbcTemplate;
@@ -51,6 +56,7 @@ public class PremiumCaseService {
         this.userRepository = userRepository;
         this.caseTableRepository = caseTableRepository;
         this.caseColumnRepository = caseColumnRepository;
+        this.sandboxDataSource = sandboxDataSource;
     }
 
     public PremiumCaseListResponse getPremiumCases() {
@@ -116,9 +122,44 @@ public class PremiumCaseService {
         if (customUserDetail.getIsPurchased() == false) {
             throw new SubscriptionNotPurchasedException("Subcription is not purchased");
         }
-        jdbcTemplate.execute("USE case_" + sqlQueryRequest.caseId());
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(sqlQueryRequest.query());
-        return new SQLQueryResponse(rows);
+
+        try (Connection conn = sandboxDataSource.getConnection()) {
+            String originalCatalog = conn.getCatalog();
+            try {
+                conn.setCatalog("case_" + sqlQueryRequest.caseId());
+                conn.setReadOnly(true);
+
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.setQueryTimeout(3);
+                    stmt.setMaxRows(10);
+
+                    try (ResultSet rs = stmt.executeQuery(sqlQueryRequest.query())) {
+                        List<Map<String, Object>> rows = new ArrayList<>();
+                        ResultSetMetaData metaData = rs.getMetaData();
+                        int columnCount = metaData.getColumnCount();
+
+                        while (rs.next()) {
+                            Map<String, Object> row = new LinkedHashMap<>();
+                            for (int i = 1; i <= columnCount; i++) {
+                                row.put(metaData.getColumnLabel(i), rs.getObject(i));
+                            }
+                            rows.add(row);
+                        }
+                        return new SQLQueryResponse(rows);
+                    }
+                }
+            } finally {
+                // BẮT BUỘC: Khôi phục lại trạng thái ban đầu cho Connection trước khi trả về HikariCP
+                conn.setReadOnly(false);
+                if (originalCatalog != null) {
+                    conn.setCatalog(originalCatalog);
+                }
+            }
+        } catch (SQLException e) {
+            // Trả về thông điệp lỗi cú pháp MySQL thân thiện để học viên sửa bài
+            throw new BadRequestException("SQL Execution Error: " + e.getMessage());
+        }
+
     }
 
     @Transactional

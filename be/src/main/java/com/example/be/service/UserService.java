@@ -3,17 +3,11 @@ package com.example.be.service;
 import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
-import com.example.be.entity.RefreshToken;
-import com.example.be.entity.User;
-import com.example.be.entity.UserCaseProgress;
-import com.example.be.entity.UserEvent;
+import com.example.be.entity.*;
 import com.example.be.enums.Role;
 import com.example.be.enums.UserEventType;
 import com.example.be.exception.*;
-import com.example.be.repository.RefreshTokenRepository;
-import com.example.be.repository.UserCaseProgressRepository;
-import com.example.be.repository.UserEventRepository;
-import com.example.be.repository.UserRepository;
+import com.example.be.repository.*;
 import com.example.be.util.PasswordGenerator;
 import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
@@ -27,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -41,6 +36,8 @@ public class UserService implements UserDetailsService {
     private final UserEventRepository userEventRepository;
     private final UserCaseProgressRepository userCaseProgressRepository;
 
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+
     UserService(UserRepository userRepository,
                 TokenUtil tokenUtil,
                 PasswordEncoder passwordEncoder,
@@ -49,7 +46,8 @@ public class UserService implements UserDetailsService {
                 EmailService emailService,
                 UserEventService userEventService,
                 UserEventRepository userEventRepository,
-                UserCaseProgressRepository userCaseProgressRepository) {
+                UserCaseProgressRepository userCaseProgressRepository,
+                PasswordResetTokenRepository passwordResetTokenRepository) {
 
         this.userRepository = userRepository;
         this.tokenUtil = tokenUtil;
@@ -60,6 +58,7 @@ public class UserService implements UserDetailsService {
         this.userEventService = userEventService;
         this.userEventRepository = userEventRepository;
         this.userCaseProgressRepository = userCaseProgressRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
     @Transactional
@@ -103,7 +102,9 @@ public class UserService implements UserDetailsService {
         user.setPremiumPurchasedAt(LocalDateTime.now());
         userRepository.save(user);
         userEventService.logEvent(user, UserEventType.SUBSCRIPTIONS, "");
-        return new SubscriptionResponse("Your subscriptions has been activated");
+
+        String accessToken = tokenUtil.generateAccessToken(new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null));
+        return new SubscriptionResponse("Your subscriptions has been activated", accessToken);
     }
 
     @Transactional
@@ -128,18 +129,46 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
+    public ForgotPasswordResponse forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
+        User user = userRepository.findByEmail(forgotPasswordRequest.email()).orElse(null);
+        if (user == null) {
+            return new ForgotPasswordResponse("If your email exits, we sent an introduction to it");
+        }
+        String token = UUID.randomUUID().toString().replace("-", "");
+        PasswordResetToken passwordResetToken = PasswordResetToken.builder()
+                .token(token)
+                .expiredAt(LocalDateTime.now().plusMinutes(15))
+                .user(user)
+                .build();
+
+        passwordResetTokenRepository.save(passwordResetToken);
+        emailService.sendNewPasswordEmail(user.getEmail(), token);
+        userEventService.logEvent(user, UserEventType.FORGOT_PASSWORD, "");
+        return new ForgotPasswordResponse("If your email exits, we sent an introduction to it");
+    }
+
+    @Transactional
     public ResetPasswordResponse resetPassword(ResetPasswordRequest resetPasswordRequest) {
-        User user = userRepository.findByEmail(resetPasswordRequest.email()).orElseThrow(() -> new UserNotFoundException("Email not found"));
-        String newPassword = PasswordGenerator.generateRandomPassword(12);
-        user.setPasswordHash(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-        Long id = user.getId();
-        List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
-        refreshTokenList.stream()
-                .forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
-        emailService.sendNewPasswordEmail(user.getEmail(), newPassword);
-        userEventService.logEvent(user, UserEventType.RESET_PASSWORD, "");
-        return new ResetPasswordResponse("An email with new password was send to your email");
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(resetPasswordRequest.token()).orElseThrow(() -> new PasswordResetTokenNotFound("Password reset token not found"));
+        if (passwordResetToken.getExpiredAt().isAfter(LocalDateTime.now()) && passwordResetToken.getUsed() == Boolean.FALSE) {
+            User user = passwordResetToken.getUser();
+            user.setPasswordHash(passwordEncoder.encode(resetPasswordRequest.newPassword()));
+            userRepository.save(user);
+
+            List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(user.getId());
+            refreshTokenList.stream().forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
+
+            passwordResetToken.setUsed(Boolean.TRUE);
+            passwordResetTokenRepository.save(passwordResetToken);
+
+            userEventService.logEvent(user, UserEventType.RESET_PASSWORD, "");
+
+            return new ResetPasswordResponse("You change to new password successfully");
+        } else {
+            throw new PasswordResetTokenExpiredException("Password reset token is expired");
+        }
+
+
     }
 
     @Transactional
@@ -152,8 +181,7 @@ public class UserService implements UserDetailsService {
             userCaseProgressRepository.deleteByUserId(id);
             List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
             refreshTokenList.forEach(refreshTokenRepository::delete);
-            List<UserEvent> userEventList = userEventRepository.findByUserId(id);
-            userEventList.forEach(userEventRepository::delete);
+            userEventRepository.deleteByUserId(id);
             userRepository.delete(user);
         } else {
             throw new WrongPasswordException("Password is wrong");

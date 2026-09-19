@@ -29,8 +29,6 @@ public class PremiumCaseService {
 
     private final CaseQuestionRepository caseQuestionRepository;
 
-    private final JdbcTemplate jdbcTemplate;
-
     private final UserRepository userRepository;
 
     private final UserCaseProgressRepository userCaseProgressRepository;
@@ -51,7 +49,7 @@ public class PremiumCaseService {
                        @Qualifier("sandboxDataSource") DataSource sandboxDataSource) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
-        this.jdbcTemplate = jdbcTemplate;
+
         this.userCaseProgressRepository = userCaseProgressRepository;
         this.userRepository = userRepository;
         this.caseTableRepository = caseTableRepository;

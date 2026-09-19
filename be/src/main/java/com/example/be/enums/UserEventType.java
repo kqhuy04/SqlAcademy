@@ -11,6 +11,7 @@ public enum UserEventType {
     LOGOUT,
     DELETE_ACCOUNT,
     CHANGE_PASSWORD,
+    FORGOT_PASSWORD,
     RESET_PASSWORD
 
 }

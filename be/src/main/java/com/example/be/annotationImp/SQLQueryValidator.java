@@ -25,35 +25,49 @@ public class SQLQueryValidator implements ConstraintValidator<SQLQueryValid, Str
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
         if (s == null || s.isBlank()) return false;
 
-        String normalized = s.trim().toUpperCase();
+        // 1. Loại bỏ comments (cả multi-line /* */ và single-line -- hoặc #)
+        String withoutComments = s.replaceAll("(?s)/\\*.*?\\*/", "");
+        withoutComments = withoutComments.replaceAll("(?m)(--|#).*?$", "");
+
+        String normalized = withoutComments.trim().toUpperCase();
+        if (normalized.isEmpty()) {
+            buildMessage(constraintValidatorContext, "Query cannot be empty");
+            return false;
+        }
+
+        // 2. Chỉ cho phép bắt đầu bằng SELECT hoặc WITH (cho CTE)
         if (!normalized.startsWith("SELECT") && !normalized.startsWith("WITH")) {
             buildMessage(constraintValidatorContext, "ONLY SELECT statement is allowed");
             return false;
         }
 
+        // 3. Kiểm tra từ khóa bị cấm (dùng (?s) để quét qua nhiều dòng)
         for (String keyword : FORBIDDEN_KEYWORDS) {
-            if (normalized.matches(".*\\b" + keyword + "\\b.*")) {
+            if (normalized.matches("(?s).*\\b" + keyword + "\\b.*")) {
                 buildMessage(constraintValidatorContext, "FORBIDDEN KEYWORD detected: " + keyword);
                 return false;
             }
         }
 
+        // 4. Kiểm tra schema bị cấm
         for (String schema : FORBIDDEN_SCHEMAS) {
-            if (normalized.matches(".*\\b" + schema + "\\b.*")) {
+            if (normalized.matches("(?s).*\\b" + schema + "\\b.*")) {
                 buildMessage(constraintValidatorContext, "FORBIDDEN SCHEMAS detected: " + schema);
                 return false;
             }
         }
 
+        // 5. Kiểm tra hàm bị cấm
         for (String function : FORBIDDEN_FUNCTIONS) {
-            if (normalized.matches(".*\\b" + function + "\\b.*")) {
+            if (normalized.matches("(?s).*\\b" + function + "\\b.*")) {
                 buildMessage(constraintValidatorContext, "FORBIDDEN FUNCTIONS detected: " + function);
                 return false;
             }
         }
 
-        String [] list = normalized.split(";");
-        if (list.length > 1) {
+        // 6. Kiểm tra multiple queries: loại bỏ dấu ; ở cuối cùng trước khi kiểm tra
+        String cleaned = normalized.replaceAll(";\\s*$", "");
+        if (cleaned.contains(";")) {
             buildMessage(constraintValidatorContext, "Multiple query is not allowed");
             return false;
         }

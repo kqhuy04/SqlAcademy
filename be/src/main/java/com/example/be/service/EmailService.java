@@ -3,6 +3,7 @@ package com.example.be.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,19 +14,22 @@ public class EmailService {
     @Value("${spring.mail.username}")
     String fromEmail;
 
+    @Value("${website.reset-password}")
+    String link;
+
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
     }
 
-    public void sendNewPasswordEmail(String toEmail, String newPassword) {
+    @Async
+    public void sendNewPasswordEmail(String toEmail, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);
         message.setTo(toEmail);
-        message.setSubject("[SQL Detective] Your new password");
+        message.setSubject("[SQL Detective] Introduction");
         message.setText("Hello,\n\n"
                 + "You have just request for your new password.\n"
-                + "Your temporary password is: " + newPassword + "\n\n"
-                + "Please log in and change password to keep your account safely!");
+                + "Please enter this link to change your password: " + link + token);
         mailSender.send(message);
     }
 }

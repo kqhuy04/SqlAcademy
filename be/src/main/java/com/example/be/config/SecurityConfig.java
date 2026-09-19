@@ -67,7 +67,7 @@ public class SecurityConfig {
         // Header FE được phép gửi:
         // - "Authorization" → để đính kèm JWT Bearer token
         // - "Content-Type"  → để gửi JSON body
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With", "Origin"));
 
         // Cho phép FE đọc header response như "Authorization" nếu cần
         config.setExposedHeaders(List.of("Authorization"));

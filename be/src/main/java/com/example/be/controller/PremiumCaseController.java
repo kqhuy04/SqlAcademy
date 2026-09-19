@@ -41,7 +41,7 @@ public class PremiumCaseController {
 
     @Idempotent
     @PostMapping("/premium_cases/end")
-    public ResponseEntity<EndCaseResponse> endCase(@RequestBody EndCaseRequest endCaseRequest) {
+    public ResponseEntity<EndCaseResponse> endCase(@RequestBody @Valid EndCaseRequest endCaseRequest) {
         return ResponseEntity.ok(premiumCaseService.endCase(endCaseRequest));
     }
 

@@ -33,11 +33,6 @@ public class AuthController {
         return ResponseEntity.ok(userService.readUser(loginRequest));
     }
 
-    @Idempotent
-    @PatchMapping("/users/me/password")
-    public ResponseEntity<ChangePasswordResponse> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
-        return ResponseEntity.ok(userService.changePassword(changePasswordRequest));
-    }
 
     @Idempotent
     @PostMapping("/auth/reset-password")
@@ -45,20 +40,12 @@ public class AuthController {
         return ResponseEntity.ok(userService.resetPassword(resetPasswordRequest));
     }
 
-    @GetMapping("/users/me")
-    public ResponseEntity<UserProfileResponse> getMe() {
-        return ResponseEntity.ok(userService.getProfile());
+    @Idempotent
+    @PostMapping("/auth/forgot-password")
+    public ResponseEntity<ForgotPasswordResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        return ResponseEntity.ok(userService.forgotPassword(forgotPasswordRequest));
     }
 
-    @GetMapping("/users/me/progress")
-    public ResponseEntity<List<UserProgressResponse>> getProgress() {
-        return ResponseEntity.ok(userService.getProgress());
-    }
-
-    @GetMapping("/leaderboard")
-    public ResponseEntity<List<LeaderboardEntryResponse>> getLeaderboard() {
-        return ResponseEntity.ok(userService.getLeaderboard());
-    }
 
     @PostMapping("/auth/refresh")
     public ResponseEntity<RefreshTokenResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
@@ -69,4 +56,6 @@ public class AuthController {
     public ResponseEntity<LogoutResponse> logout(@Valid @RequestBody LogoutRequest logoutRequest) {
         return ResponseEntity.ok(refreshTokenService.logout(logoutRequest));
     }
+
+
 }

@@ -1,9 +1,7 @@
 package com.example.be.controller;
 
 import com.example.be.annotation.Idempotent;
-import com.example.be.dto.request.ChangePasswordRequest;
-import com.example.be.dto.request.DeleteUserRequest;
-import com.example.be.dto.request.SubscriptionRequest;
+import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.service.RefreshTokenService;
 import com.example.be.service.UserService;
@@ -37,12 +35,12 @@ public class UserController {
         return ResponseEntity.ok(userService.deleteUser(deleteUserRequest));
     }
 
-    @GetMapping("/users/me")
+    @GetMapping("/me")
     public ResponseEntity<UserProfileResponse> getMe() {
         return ResponseEntity.ok(userService.getProfile());
     }
 
-    @GetMapping("/users/me/progress")
+    @GetMapping("/me/progress")
     public ResponseEntity<List<UserProgressResponse>> getProgress() {
         return ResponseEntity.ok(userService.getProgress());
     }
@@ -53,8 +51,15 @@ public class UserController {
     }
 
     @Idempotent
-    @PatchMapping("/users/me/password")
+    @PatchMapping("/me/password")
     public ResponseEntity<ChangePasswordResponse> changePassword(@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         return ResponseEntity.ok(userService.changePassword(changePasswordRequest));
     }
+
+    @Idempotent
+    @PatchMapping("/me/username")
+    public ResponseEntity<ChangeUsernameResponse> changeUsername(@Valid @RequestBody ChangeUsernameRequest changeUsernameRequest) {
+        return ResponseEntity.ok(userService.changeUsername(changeUsernameRequest));
+    }
+
 }

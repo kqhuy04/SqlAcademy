@@ -57,5 +57,9 @@ public class AuthController {
         return ResponseEntity.ok(refreshTokenService.logout(logoutRequest));
     }
 
+    @PostMapping("/auth/google")
+    public ResponseEntity<LoginResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest googleLoginRequest) {
+        return ResponseEntity.ok(userService.loginWithGoogle(googleLoginRequest));
+    }
 
 }

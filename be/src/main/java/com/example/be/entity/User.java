@@ -1,5 +1,6 @@
 package com.example.be.entity;
 
+import com.example.be.enums.AuthProvider;
 import com.example.be.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -59,5 +60,16 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<RefreshToken> refreshTokens;
+
+    @Column(name = "provider_id")
+    private String providerId;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider")
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
 
 }

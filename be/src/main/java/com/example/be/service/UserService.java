@@ -4,6 +4,7 @@ import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.entity.*;
+import com.example.be.enums.AuthProvider;
 import com.example.be.enums.Role;
 import com.example.be.enums.UserEventType;
 import com.example.be.exception.*;
@@ -11,6 +12,7 @@ import com.example.be.repository.*;
 import com.example.be.util.PasswordGenerator;
 import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -35,8 +37,8 @@ public class UserService implements UserDetailsService {
     private final UserEventService userEventService;
     private final UserEventRepository userEventRepository;
     private final UserCaseProgressRepository userCaseProgressRepository;
-
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final GoogleAuthService googleAuthService;
 
     UserService(UserRepository userRepository,
                 TokenUtil tokenUtil,
@@ -47,7 +49,8 @@ public class UserService implements UserDetailsService {
                 UserEventService userEventService,
                 UserEventRepository userEventRepository,
                 UserCaseProgressRepository userCaseProgressRepository,
-                PasswordResetTokenRepository passwordResetTokenRepository) {
+                PasswordResetTokenRepository passwordResetTokenRepository,
+                GoogleAuthService googleAuthService) {
 
         this.userRepository = userRepository;
         this.tokenUtil = tokenUtil;
@@ -59,6 +62,7 @@ public class UserService implements UserDetailsService {
         this.userEventRepository = userEventRepository;
         this.userCaseProgressRepository = userCaseProgressRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.googleAuthService = googleAuthService;
     }
 
     @Transactional
@@ -221,8 +225,83 @@ public class UserService implements UserDetailsService {
         }).toList();
     }
 
+    @Transactional
+    public ChangeUsernameResponse changeUsername(ChangeUsernameRequest changeUsernameRequest) {
+        if (userRepository.existsByUsername(changeUsernameRequest.username())) {
+            throw new UsernameAlreadyExistsException("Username already exists");
+        }
+        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
+        User user = userRepository.findById(customUserDetail.getUserId()).orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        user.setUsername(changeUsernameRequest.username());
+        userRepository.save(user);
+        return new ChangeUsernameResponse("Change username successfully");
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return null;
     }
+
+    @Transactional
+    public LoginResponse loginWithGoogle(GoogleLoginRequest googleLoginRequest) {
+        GoogleIdToken.Payload payload = googleAuthService.verifyToken(googleLoginRequest.idToken());
+
+        String googleSubId = payload.getSubject();
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+        String pictureUrl = (String) payload.get("picture");
+
+        User user = userRepository.findByEmail(email).map(existingUser -> {
+            if (existingUser.getProviderId() == null) {
+                existingUser.setAuthProvider(AuthProvider.GOOGLE);
+                existingUser.setProviderId(googleSubId);
+                if (existingUser.getAvatarUrl() == null) {
+                    existingUser.setAvatarUrl(pictureUrl);
+                }
+                return userRepository.save(existingUser);
+            }
+            return existingUser;
+        }).orElseGet(() -> {
+            String uniqueUsername = generateUniqueUsername(email);
+            User newUser = User.builder()
+                    .email(email)
+                    .username(uniqueUsername)
+                    .passwordHash(null)
+                    .authProvider(AuthProvider.GOOGLE)
+                    .providerId(googleSubId)
+                    .avatarUrl(pictureUrl)
+                    .role(Role.ROLE_USER)
+                    .totalScore(0)
+                    .build();
+            User savedUser = userRepository.save(newUser);
+            userEventService.logEvent(savedUser, UserEventType.ACCOUNT_CREATED, "Registered via Google OAuth");
+            return savedUser;
+        });
+        CustomUserDetail userDetails = new CustomUserDetail(
+                user.getUsername(),
+                user.getRole(),
+                user.getId(),
+                user.getPremiumPurchasedAt() != null
+        );
+        String accessToken = tokenUtil.generateAccessToken(userDetails);
+        String refreshToken = refreshTokenService.generateRefreshToken(user);
+        userEventService.logEvent(user, UserEventType.LOGIN, "Logged in via Google OAuth");
+        return new LoginResponse(accessToken, refreshToken);
+    }
+    private String generateUniqueUsername(String email) {
+        String baseName = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");
+        if (baseName.length() > 15) {
+            baseName = baseName.substring(0, 15);
+        }
+        if (baseName.isEmpty()) {
+            baseName = "cadet"; // Tên mặc định cho học viên SQL Police
+        }
+        String candidate = baseName;
+        while (userRepository.existsByUsername(candidate)) {
+            candidate = baseName + "_" + UUID.randomUUID().toString().substring(0, 5);
+        }
+        return candidate;
+    }
+
 }

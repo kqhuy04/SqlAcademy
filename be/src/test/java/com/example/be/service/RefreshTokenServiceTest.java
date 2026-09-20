@@ -26,6 +26,9 @@ class RefreshTokenServiceTest {
     @Mock
     RefreshTokenRepository refreshTokenRepository;
 
+    @Mock
+    UserEventService userEventService;
+
     @BeforeEach
     void setUp() {
     }

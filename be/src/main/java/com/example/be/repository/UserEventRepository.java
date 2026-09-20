@@ -18,6 +18,8 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
 
     List<UserEvent> findByCreatedAtGreaterThan(LocalDateTime createAt);
 
+    boolean existsByUserIdAndUserEventTypeAndMetadata(Long userId, UserEventType userEventType, String metadata);
+
     @Modifying
     @Query("DELETE FROM UserEvent u where u.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);

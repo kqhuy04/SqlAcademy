@@ -3,6 +3,7 @@ package com.example.be.controller;
 import com.example.be.annotation.Idempotent;
 import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.EndCaseRequest;
+import com.example.be.dto.request.UnlockHintRequest;
 import com.example.be.dto.response.*;
 import com.example.be.service.PremiumCaseService;
 import jakarta.validation.Valid;
@@ -37,6 +38,12 @@ public class PremiumCaseController {
     @PostMapping("/premium_cases/run")
     public ResponseEntity<SQLQueryResponse> runQuery(@RequestBody @Valid SQLQueryRequest sqlQueryRequest) {
         return ResponseEntity.ok(premiumCaseService.runQuery(sqlQueryRequest));
+    }
+
+    @Idempotent
+    @PostMapping("/premium_cases/hint")
+    public ResponseEntity<UnlockHintResponse> unlockHint(@RequestBody @Valid UnlockHintRequest unlockHintRequest) {
+        return ResponseEntity.ok(premiumCaseService.unlockHint(unlockHintRequest));
     }
 
     @Idempotent

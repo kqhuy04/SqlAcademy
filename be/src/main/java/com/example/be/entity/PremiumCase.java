@@ -37,9 +37,6 @@ public class PremiumCase {
     @Column(name = "base_score")
     private Integer baseScore;
 
-    @Column(name = "xp_reward")
-    private Integer xpReward;
-
     @Column(name = "badge_name")
     private String badgeName;
 

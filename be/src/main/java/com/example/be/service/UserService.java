@@ -216,8 +216,8 @@ public class UserService implements UserDetailsService {
         List<User> users = userRepository.findAllByOrderByTotalScoreDesc();
         int[] rank = {1};
         return users.stream().map(u -> {
-            long casesCompleted = userCaseProgressRepository.countByUserId(u.getId());
-            return new LeaderboardEntryResponse(rank[0]++, u.getUsername(), u.getTotalScore(), u.getTotalXp(), (int) casesCompleted);
+            long casesCompleted = userCaseProgressRepository.countByUserIdAndStatus(u.getId(), "COMPLETED");
+            return new LeaderboardEntryResponse(rank[0]++, u.getUsername(), u.getTotalScore(), (int) casesCompleted);
         }).toList();
     }
 

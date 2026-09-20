@@ -35,10 +35,6 @@ public class User {
     @Column(name = "premium_purchased_at")
     private LocalDateTime premiumPurchasedAt;
 
-    @Column(name = "total_xp", nullable = false)
-    @Builder.Default
-    private Integer totalXp = 0;
-
     @Column(name = "total_score", nullable = false)
     @Builder.Default
     private Integer totalScore = 0;

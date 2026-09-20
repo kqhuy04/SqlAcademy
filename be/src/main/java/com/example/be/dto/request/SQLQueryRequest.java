@@ -11,6 +11,8 @@ public record SQLQueryRequest(
         @Max(50)
         Long caseId,
 
+        Long questionId,
+
         @SQLQueryValid
         String query
 ) {

@@ -16,11 +16,8 @@ public record EndCaseRequest(
         @NotBlank(message = "Answer can't be blank")
         String answer,
 
-        @Min(0)
-        @Max(3)
-        int hintsUsed,
+        Integer hintsUsed,
 
-        @Min(1)
-        int attempts
+        Integer attempts
 ) {
 }

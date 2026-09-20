@@ -4,6 +4,7 @@ import com.example.be.dto.request.RegisterRequest;
 import com.example.be.dto.response.RegisterResponse;
 import com.example.be.entity.User;
 import com.example.be.repository.UserRepository;
+import com.example.be.repository.UserEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,12 @@ class UserServiceTest {
 
     @Mock
     PasswordEncoder passwordEncoder;
+
+    @Mock
+    UserEventService userEventService;
+
+    @Mock
+    UserEventRepository userEventRepository;
 
     @InjectMocks
     UserService userService;

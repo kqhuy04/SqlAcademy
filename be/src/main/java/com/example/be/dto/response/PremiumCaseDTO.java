@@ -13,7 +13,6 @@ public record PremiumCaseDTO(
         String hint,
         Integer orderIndex,
         Integer baseScore,
-        Integer xpReward,
         String badgeName,
         String badgeIcon,
         Integer questionCount,

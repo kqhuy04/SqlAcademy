@@ -3,13 +3,14 @@ package com.example.be.service;
 import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.EndCaseRequest;
+import com.example.be.dto.request.UnlockHintRequest;
 import com.example.be.dto.response.*;
 import com.example.be.entity.*;
+import com.example.be.enums.UserEventType;
 import com.example.be.exception.*;
 import com.example.be.repository.*;
 import com.example.be.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,22 +40,28 @@ public class PremiumCaseService {
 
     private final DataSource sandboxDataSource;
 
+    private final UserEventService userEventService;
+
+    private final UserEventRepository userEventRepository;
+
     PremiumCaseService(PremiumCaseRepository premiumCaseRepository,
                        CaseQuestionRepository caseQuestionRepository,
-                       JdbcTemplate jdbcTemplate,
                        UserCaseProgressRepository userCaseProgressRepository,
                        UserRepository userRepository,
                        CaseTableRepository caseTableRepository,
                        CaseColumnRepository caseColumnRepository,
-                       @Qualifier("sandboxDataSource") DataSource sandboxDataSource) {
+                       @Qualifier("sandboxDataSource") DataSource sandboxDataSource,
+                       UserEventService userEventService,
+                       UserEventRepository userEventRepository) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
-
         this.userCaseProgressRepository = userCaseProgressRepository;
         this.userRepository = userRepository;
         this.caseTableRepository = caseTableRepository;
         this.caseColumnRepository = caseColumnRepository;
         this.sandboxDataSource = sandboxDataSource;
+        this.userEventService = userEventService;
+        this.userEventRepository = userEventRepository;
     }
 
     public PremiumCaseListResponse getPremiumCases() {
@@ -69,7 +76,6 @@ public class PremiumCaseService {
                                 .hint(premiumCase.getHint())
                                 .orderIndex(premiumCase.getOrderIndex())
                                 .baseScore(premiumCase.getBaseScore())
-                                .xpReward(premiumCase.getXpReward())
                                 .badgeName(premiumCase.getBadgeName())
                                 .badgeIcon(premiumCase.getBadgeIcon())
                                 .questionCount(premiumCase.getQuestionCount())
@@ -105,20 +111,98 @@ public class PremiumCaseService {
                 .hint(premiumCase.getHint())
                 .orderIndex(premiumCase.getOrderIndex())
                 .baseScore(premiumCase.getBaseScore())
-                .xpReward(premiumCase.getXpReward())
                 .badgeName(premiumCase.getBadgeName())
                 .badgeIcon(premiumCase.getBadgeIcon())
                 .questionCount(premiumCase.getQuestionCount())
                 .isUnlocked(customUserDetail.getIsPurchased())
                 .caseQuestionDTOList(list)
                 .build();
+    }
 
+    @Transactional
+    public UnlockHintResponse unlockHint(UnlockHintRequest request) {
+        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
+        if (Boolean.FALSE.equals(customUserDetail.getIsPurchased())) {
+            throw new SubscriptionNotPurchasedException("Subcription is not purchased");
+        }
+
+        User user = userRepository.findById(customUserDetail.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        CaseQuestion caseQuestion = caseQuestionRepository.findById(request.questionId())
+                .orElseThrow(() -> new CaseQuestionNotFoundException("Question not found"));
+
+        String hintText = switch (request.hintNumber()) {
+            case 1 -> caseQuestion.getHint1();
+            case 2 -> caseQuestion.getHint2();
+            case 3 -> caseQuestion.getHint3();
+            default -> throw new BadRequestException("Invalid hint number: " + request.hintNumber());
+        };
+
+        if (hintText == null || hintText.isBlank()) {
+            throw new BadRequestException("Hint " + request.hintNumber() + " is not available for this question");
+        }
+
+        UserCaseProgress progress = userCaseProgressRepository
+                .findByUserIdAndCaseQuestionId(user.getId(), caseQuestion.getId())
+                .orElseGet(() -> UserCaseProgress.builder()
+                        .user(user)
+                        .premiumCase(caseQuestion.getPremiumCase())
+                        .caseQuestion(caseQuestion)
+                        .status("IN_PROGRESS")
+                        .hintsUsed(0)
+                        .attempts(0)
+                        .scoreEarned(0)
+                        .build());
+
+        String hintMeta = "caseId=" + request.caseId() + ",questionId=" + request.questionId() + ",hint=" + request.hintNumber();
+        boolean alreadyLogged = userEventRepository
+                .existsByUserIdAndUserEventTypeAndMetadata(user.getId(), UserEventType.HINT_USED, hintMeta);
+
+        if (!alreadyLogged) {
+            userEventService.logEvent(user, UserEventType.HINT_USED, hintMeta);
+            int currentHints = progress.getHintsUsed() != null ? progress.getHintsUsed() : 0;
+            progress.setHintsUsed(currentHints + 1);
+            userCaseProgressRepository.save(progress);
+        }
+
+        return new UnlockHintResponse(request.hintNumber(), hintText, progress.getHintsUsed());
     }
 
     public SQLQueryResponse runQuery(SQLQueryRequest sqlQueryRequest) {
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
         if (customUserDetail.getIsPurchased() == false) {
             throw new SubscriptionNotPurchasedException("Subcription is not purchased");
+        }
+
+        User user = userRepository.findById(customUserDetail.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (sqlQueryRequest.questionId() != null) {
+            CaseQuestion caseQuestion = caseQuestionRepository.findById(sqlQueryRequest.questionId()).orElse(null);
+            if (caseQuestion != null) {
+                UserCaseProgress progress = userCaseProgressRepository
+                        .findByUserIdAndCaseQuestionId(user.getId(), caseQuestion.getId())
+                        .orElseGet(() -> UserCaseProgress.builder()
+                                .user(user)
+                                .premiumCase(caseQuestion.getPremiumCase())
+                                .caseQuestion(caseQuestion)
+                                .status("IN_PROGRESS")
+                                .hintsUsed(0)
+                                .attempts(0)
+                                .scoreEarned(0)
+                                .build());
+
+                if (!"COMPLETED".equalsIgnoreCase(progress.getStatus())) {
+                    int attempts = progress.getAttempts() != null ? progress.getAttempts() : 0;
+                    progress.setAttempts(attempts + 1);
+                    userCaseProgressRepository.save(progress);
+                }
+            }
+            String meta = "caseId=" + sqlQueryRequest.caseId() + ",questionId=" + sqlQueryRequest.questionId();
+            userEventService.logEvent(user, UserEventType.SQL_EXECUTED, meta);
+        } else {
+            userEventService.logEvent(user, UserEventType.SQL_EXECUTED, "caseId=" + sqlQueryRequest.caseId());
         }
 
         try (Connection conn = sandboxDataSource.getConnection()) {
@@ -147,14 +231,12 @@ public class PremiumCaseService {
                     }
                 }
             } finally {
-                // BẮT BUỘC: Khôi phục lại trạng thái ban đầu cho Connection trước khi trả về HikariCP
                 conn.setReadOnly(false);
-                if (originalCatalog != null) {
+                if (originalCatalog != null && !originalCatalog.isBlank()) {
                     conn.setCatalog(originalCatalog);
                 }
             }
         } catch (SQLException e) {
-            // Trả về thông điệp lỗi cú pháp MySQL thân thiện để học viên sửa bài
             throw new BadRequestException("SQL Execution Error: " + e.getMessage());
         }
 
@@ -166,45 +248,63 @@ public class PremiumCaseService {
                 .findById(endCaseRequest.questionId())
                 .orElseThrow(() -> new CaseQuestionNotFoundException("Question not found"));
 
-        if (!endCaseRequest.answer().equalsIgnoreCase(caseQuestion.getExpectedOutput())) {
-            return new EndCaseResponse("Wrong answer", false, 0, 0);
-        }
-
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
         User user = userRepository.findById(customUserDetail.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         boolean alreadyDone = userCaseProgressRepository
-                .existsByUserIdAndCaseQuestionId(user.getId(), caseQuestion.getId());
+                .existsByUserIdAndCaseQuestionIdAndStatus(user.getId(), caseQuestion.getId(), "COMPLETED");
         if (alreadyDone) {
-            return new EndCaseResponse("Already completed", true, 0, 0);
+            return new EndCaseResponse("Already completed", true, 0);
+        }
+
+        UserCaseProgress progress = userCaseProgressRepository
+                .findByUserIdAndCaseQuestionId(user.getId(), caseQuestion.getId())
+                .orElseGet(() -> UserCaseProgress.builder()
+                        .user(user)
+                        .premiumCase(caseQuestion.getPremiumCase())
+                        .caseQuestion(caseQuestion)
+                        .status("IN_PROGRESS")
+                        .hintsUsed(0)
+                        .attempts(0)
+                        .scoreEarned(0)
+                        .build());
+
+        boolean isCorrect = endCaseRequest.answer() != null
+                && endCaseRequest.answer().trim().equalsIgnoreCase(caseQuestion.getExpectedOutput().trim());
+
+        if (!isCorrect) {
+            int currentAttempts = progress.getAttempts() != null ? progress.getAttempts() : 0;
+            progress.setAttempts(currentAttempts + 1);
+            userCaseProgressRepository.save(progress);
+
+            String failMeta = "caseId=" + endCaseRequest.caseId() + ",questionId=" + endCaseRequest.questionId();
+            userEventService.logEvent(user, UserEventType.ANSWER_FAILED, failMeta);
+
+            return new EndCaseResponse("Submitted evidence is incorrect! Inspect your query results again.", false, 0);
         }
 
         PremiumCase premiumCase = caseQuestion.getPremiumCase();
         int base = premiumCase.getBaseScore() != null ? premiumCase.getBaseScore() : 100;
-        int hintPenalty   = endCaseRequest.hintsUsed() * (base / 5);
-        int attemptPenalty = Math.max(0, endCaseRequest.attempts() - 1) * (base / 10);
+
+        int serverHints = progress.getHintsUsed() != null ? progress.getHintsUsed() : 0;
+        int serverAttempts = progress.getAttempts() != null && progress.getAttempts() > 0 ? progress.getAttempts() : 1;
+
+        int hintPenalty = serverHints * (base / 5);
+        int attemptPenalty = Math.max(0, serverAttempts - 1) * (base / 10);
         int scoreEarned = Math.max(0, base - hintPenalty - attemptPenalty);
 
-        int xpEarned = premiumCase.getXpReward() != null ? premiumCase.getXpReward() : 0;
-
-        UserCaseProgress progress = UserCaseProgress.builder()
-                .user(user)
-                .premiumCase(premiumCase)
-                .caseQuestion(caseQuestion)
-                .status("Completed")
-                .scoreEarned(scoreEarned)
-                .hintsUsed(endCaseRequest.hintsUsed())
-                .attempts(endCaseRequest.attempts())
-                .completedAt(LocalDateTime.now())
-                .build();
+        progress.setStatus("COMPLETED");
+        progress.setScoreEarned(scoreEarned);
+        progress.setHintsUsed(serverHints);
+        progress.setAttempts(serverAttempts);
+        progress.setCompletedAt(LocalDateTime.now());
         userCaseProgressRepository.save(progress);
 
         user.setTotalScore(user.getTotalScore() + scoreEarned);
-        user.setTotalXp(user.getTotalXp() + xpEarned);
 
         long completedCount = userCaseProgressRepository
-                .countByUserIdAndPremiumCaseId(user.getId(), premiumCase.getId());
+                .countByUserIdAndPremiumCaseIdAndStatus(user.getId(), premiumCase.getId(), "COMPLETED");
         boolean justFinishedCase = (completedCount >= premiumCase.getQuestionCount());
         if (justFinishedCase && premiumCase.getBadgeIcon() != null) {
             String existing = user.getBadgesEarned() != null ? user.getBadgesEarned() : "";
@@ -218,7 +318,10 @@ public class PremiumCaseService {
 
         userRepository.save(user);
 
-        return new EndCaseResponse("Correct!", true, scoreEarned, xpEarned);
+        String successMeta = "caseId=" + endCaseRequest.caseId() + ",questionId=" + endCaseRequest.questionId() + ",score=" + scoreEarned;
+        userEventService.logEvent(user, UserEventType.CASE_COMPLETED, successMeta);
+
+        return new EndCaseResponse("Correct!", true, scoreEarned);
     }
 
     public GetTableResponse getTables(Long id) {

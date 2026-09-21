@@ -34,3 +34,7 @@ build/
 
 ### Local config (sensitive credentials - DO NOT COMMIT) ###
 **/application-local.properties
+
+### Logs ###
+logs/
+*.log

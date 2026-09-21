@@ -11,6 +11,9 @@ public record CaseQuestionDTO(
         String hint1,
         String hint2,
         String hint3,
+        Boolean hasHint1,
+        Boolean hasHint2,
+        Boolean hasHint3,
         String skillTags
 ) {
 }

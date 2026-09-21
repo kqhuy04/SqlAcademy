@@ -3,10 +3,7 @@ package com.example.be.controller;
 import com.example.be.enums.PaymentGateway;
 import com.example.be.service.PaymentService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -24,5 +21,10 @@ public class PaymentController {
     public ResponseEntity<Map<String, String>> checkout(@RequestParam PaymentGateway gateway) {
         String paymentUrl = paymentService.createOrder(gateway);
         return ResponseEntity.ok(Map.of("paymentUrl", paymentUrl));
+    }
+
+    @GetMapping("/orders/{orderCode}/status")
+    public ResponseEntity<Map<String, Object>> getOrderStatus(@PathVariable Long orderCode) {
+        return ResponseEntity.ok(paymentService.getOrderStatus(orderCode));
     }
 }

@@ -24,12 +24,6 @@ public class UserController {
         this.refreshTokenService = refreshTokenService;
     }
 
-    @Idempotent
-    @PatchMapping("/me/subscriptions")
-    public ResponseEntity<SubscriptionResponse> subscribe(@Valid @RequestBody SubscriptionRequest subscriptionRequest) {
-        return ResponseEntity.ok(userService.purchase(subscriptionRequest));
-    }
-
     @DeleteMapping("/me")
     public ResponseEntity<DeleteUserResponse> deleteUser(@Valid @RequestBody DeleteUserRequest deleteUserRequest) {
         return ResponseEntity.ok(userService.deleteUser(deleteUserRequest));

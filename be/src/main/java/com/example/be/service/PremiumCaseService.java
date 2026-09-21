@@ -18,9 +18,11 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -90,18 +92,37 @@ public class PremiumCaseService {
         List<CaseQuestion> caseQuestionList = caseQuestionRepository.findByPremiumCaseId(premiumCase.getId());
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
         if (customUserDetail.getIsPurchased() == false) {
-            throw new SubscriptionNotPurchasedException("Subcription is not purchased");
+            throw new SubscriptionNotPurchasedException("Subscription is not purchased");
         }
+        String prefix = "caseId=" + premiumCase.getId() + ",%";
+        List<String> unlockedEventMetas = userEventRepository
+                .findMetadataByUserIdAndTypeAndPrefix(customUserDetail.getUserId(), UserEventType.HINT_USED, prefix);
+        Set<String> unlockedHintsSet = new HashSet<>(unlockedEventMetas != null ? unlockedEventMetas : List.of());
+
         List<CaseQuestionDTO> list = caseQuestionList.stream().map(
-                caseQuestion -> CaseQuestionDTO.builder()
-                        .id(caseQuestion.getId())
-                        .orderIndex(caseQuestion.getOrderIndex())
-                        .questionVi(caseQuestion.getQuestionVi())
-                        .questionEn(caseQuestion.getQuestionEn())
-                        .hint1(caseQuestion.getHint1())
-                        .hint2(caseQuestion.getHint2())
-                        .hint3(caseQuestion.getHint3())
-                        .skillTags(caseQuestion.getSkillTags()).build()
+                caseQuestion -> {
+                    boolean hasH1 = caseQuestion.getHint1() != null && !caseQuestion.getHint1().isBlank();
+                    boolean hasH2 = caseQuestion.getHint2() != null && !caseQuestion.getHint2().isBlank();
+                    boolean hasH3 = caseQuestion.getHint3() != null && !caseQuestion.getHint3().isBlank();
+
+                    boolean isH1Unlocked = unlockedHintsSet.contains("caseId=" + premiumCase.getId() + ",questionId=" + caseQuestion.getId() + ",hint=1");
+                    boolean isH2Unlocked = unlockedHintsSet.contains("caseId=" + premiumCase.getId() + ",questionId=" + caseQuestion.getId() + ",hint=2");
+                    boolean isH3Unlocked = unlockedHintsSet.contains("caseId=" + premiumCase.getId() + ",questionId=" + caseQuestion.getId() + ",hint=3");
+
+                    return CaseQuestionDTO.builder()
+                            .id(caseQuestion.getId())
+                            .orderIndex(caseQuestion.getOrderIndex())
+                            .questionVi(caseQuestion.getQuestionVi())
+                            .questionEn(caseQuestion.getQuestionEn())
+                            .hint1(isH1Unlocked ? caseQuestion.getHint1() : null)
+                            .hint2(isH2Unlocked ? caseQuestion.getHint2() : null)
+                            .hint3(isH3Unlocked ? caseQuestion.getHint3() : null)
+                            .hasHint1(hasH1)
+                            .hasHint2(hasH2)
+                            .hasHint3(hasH3)
+                            .skillTags(caseQuestion.getSkillTags())
+                            .build();
+                }
         ).toList();
         return PremiumCaseDTO.builder()
                 .id(premiumCase.getId())
@@ -327,6 +348,12 @@ public class PremiumCaseService {
     public GetTableResponse getTables(Long id) {
         if (!premiumCaseRepository.existsById(id)) {
             throw new PremiumCaseNotFoundException("Premium Case not found");
+        }
+
+        // [FIX PT-03] Verify subscription before exposing case table schema
+        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
+        if (Boolean.FALSE.equals(customUserDetail.getIsPurchased())) {
+            throw new SubscriptionNotPurchasedException("Subscription is not purchased");
         }
 
         List<CaseTable> caseTableList = caseTableRepository.findByPremiumCaseId(id);

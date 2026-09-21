@@ -9,7 +9,8 @@ public class SQLQueryValidator implements ConstraintValidator<SQLQueryValid, Str
     private static final List<String> FORBIDDEN_KEYWORDS = List.of(
             "INSERT", "UPDATE", "DELETE", "DROP", "ALTER",
             "TRUNCATE", "EXEC", "EXECUTE", "GRANT", "REVOKE",
-            "REPLACE", "CALL", "LOAD", "IMPORT", "CREATE", "USE"
+            "REPLACE", "CALL", "LOAD", "IMPORT", "CREATE", "USE",
+            "INTO", "OUTFILE", "DUMPFILE" // <-- Thêm các từ khóa ghi file này
     );
 
     private static final List<String> FORBIDDEN_SCHEMAS = List.of(

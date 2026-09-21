@@ -15,6 +15,8 @@ import com.example.be.repository.UserRepository;
 import com.example.be.strategy.payment.PaymentGatewayStrategy;
 import com.example.be.strategy.payment.PaymentStrategyFactory;
 import com.example.be.util.SecurityUtil;
+import com.example.be.util.TokenUtil;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.crypto.SecretKey;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -32,16 +35,19 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final PaymentStrategyFactory strategyFactory;
     private final UserEventService userEventService;
+    private final TokenUtil tokenUtil;
     public PaymentService(OrderRepository orderRepository,
                           PaymentTransactionRepository transactionRepository,
                           UserRepository userRepository,
                           PaymentStrategyFactory strategyFactory,
-                          UserEventService userEventService) {
+                          UserEventService userEventService,
+                          TokenUtil tokenUtil) {
         this.orderRepository = orderRepository;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.strategyFactory = strategyFactory;
         this.userEventService = userEventService;
+        this.tokenUtil = tokenUtil;
     }
 
     @Transactional
@@ -51,8 +57,8 @@ public class PaymentService {
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         long orderCode = System.currentTimeMillis() % 10000000000L + ThreadLocalRandom.current().nextInt(1000, 9999);
-        BigDecimal amount = (gateway == PaymentGateway.PAYOS) ? new BigDecimal("99000"): new BigDecimal("4.99");
-        String currency = (gateway == PaymentGateway.PAYOS) ? "VND": "USD";
+        BigDecimal amount = (gateway == PaymentGateway.VNPAY) ? new BigDecimal("99000") : new BigDecimal("4.99");
+        String currency = (gateway == PaymentGateway.VNPAY) ? "VND" : "USD";
         Order order = Order.builder()
                 .orderCode(orderCode)
                 .user(user)
@@ -61,7 +67,7 @@ public class PaymentService {
                 .status(OrderStatus.PENDING)
                 .paymentGateway(gateway)
                 .itemType("PREMIUM_LIFETIME")
-                .expiresAt(LocalDateTime.now().plusMinutes(15)) // Đơn hết hạn sau 15 phút
+                .expiredAt(LocalDateTime.now().plusMinutes(15)) // Đơn hết hạn sau 15 phút
                 .build();
         orderRepository.save(order);
 
@@ -102,5 +108,29 @@ public class PaymentService {
 
         transactionRepository.save(tx);
         userEventService.logEvent(user, UserEventType.SUBSCRIPTIONS, "Purchased via " + gateway);
+    }
+
+    public Map<String, Object> getOrderStatus(Long orderCode) {
+        Order order = orderRepository.findByOrderCode(orderCode).orElseThrow(() -> new BadRequestException("Order not found"));
+        if (order.getStatus() == OrderStatus.PAID) {
+            CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
+            if (customUserDetail.getUserId() == order.getUser().getId()) {
+                customUserDetail.setIsPurchased(Boolean.TRUE);
+                String accessToken = tokenUtil.generateAccessToken(customUserDetail);
+                return Map.of("Order code", orderCode, "Status", order.getStatus(), "Access token", accessToken);
+            }
+
+        }
+        return Map.of("Order code", orderCode, "Status", order.getStatus());
+    }
+
+    @Scheduled(fixedRate = 300000)
+    @Transactional
+    public void expiredOrder() {
+        List<Order> expiredOrders = orderRepository.findByStatusAndExpiredAtBefore(OrderStatus.PENDING, LocalDateTime.now());
+        for (Order order : expiredOrders) {
+            order.setStatus(OrderStatus.EXPIRED);
+        }
+        orderRepository.saveAll(expiredOrders);
     }
 }

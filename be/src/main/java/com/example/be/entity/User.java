@@ -72,4 +72,8 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
 }

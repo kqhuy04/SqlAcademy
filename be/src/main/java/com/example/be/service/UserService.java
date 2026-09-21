@@ -1,6 +1,7 @@
 package com.example.be.service;
 
 import com.example.be.dto.CustomUserDetail;
+import com.example.be.dto.LeaderboardProjection;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
 import com.example.be.entity.*;
@@ -86,29 +87,17 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public LoginResponse readUser(LoginRequest loginRequest) {
-        User user = userRepository.findByUsername(loginRequest.username()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
-            CustomUserDetail userDetails = new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null);
-            String accessToken = tokenUtil.generateAccessToken(userDetails);
-            String refreshToken = refreshTokenService.generateRefreshToken(user);
-            userEventService.logEvent(user, UserEventType.LOGIN, "");
-            return new LoginResponse(accessToken, refreshToken);
-        } else {
-            throw new WrongPasswordException("Username and password are wrong!");
+        User user = userRepository.findByUsername(loginRequest.username())
+                .orElseThrow(() -> new WrongPasswordException("Invalid username or password"));
+        if (!passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
+            throw new WrongPasswordException("Invalid username or password");
         }
-    }
 
-    @Transactional
-    public SubscriptionResponse purchase(SubscriptionRequest subscriptionRequest) {
-        UserDetails userDetails = SecurityUtil.getCurrentUser();
-        String username = userDetails.getUsername();
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        user.setPremiumPurchasedAt(LocalDateTime.now());
-        userRepository.save(user);
-        userEventService.logEvent(user, UserEventType.SUBSCRIPTIONS, "");
-
-        String accessToken = tokenUtil.generateAccessToken(new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null));
-        return new SubscriptionResponse("Your subscriptions has been activated", accessToken);
+        CustomUserDetail userDetails = new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null);
+        String accessToken = tokenUtil.generateAccessToken(userDetails);
+        String refreshToken = refreshTokenService.generateRefreshToken(user);
+        userEventService.logEvent(user, UserEventType.LOGIN, "");
+        return new LoginResponse(accessToken, refreshToken);
     }
 
     @Transactional
@@ -180,16 +169,15 @@ public class UserService implements UserDetailsService {
         UserDetails userDetails = SecurityUtil.getCurrentUser();
         String username = userDetails.getUsername();
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        if (passwordEncoder.matches(deleteUserRequest.password(), user.getPasswordHash())) {
-            Long id = user.getId();
-            userCaseProgressRepository.deleteByUserId(id);
-            List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
-            refreshTokenList.forEach(refreshTokenRepository::delete);
-            userEventRepository.deleteByUserId(id);
-            userRepository.delete(user);
-        } else {
+        if (!passwordEncoder.matches(deleteUserRequest.password(), user.getPasswordHash())) {
             throw new WrongPasswordException("Password is wrong");
         }
+        Long id = user.getId();
+        userCaseProgressRepository.deleteByUserId(id);
+        List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
+        refreshTokenList.forEach(refreshTokenRepository::delete);
+        userEventRepository.deleteByUserId(id);
+        userRepository.delete(user);
         return new DeleteUserResponse("Account deleted successfully");
     }
 
@@ -202,7 +190,7 @@ public class UserService implements UserDetailsService {
 
     public List<UserProgressResponse> getProgress() {
         CustomUserDetail principal = SecurityUtil.getCurrentUser();
-        List<UserCaseProgress> progressList = userCaseProgressRepository.findByUserId(principal.getUserId());
+        List<UserCaseProgress> progressList = userCaseProgressRepository.findByUserIdWithCaseAndQuestion(principal.getUserId());
         return progressList.stream().map(p -> new UserProgressResponse(
                 p.getPremiumCase().getId(),
                 p.getPremiumCase().getTitle(),
@@ -217,12 +205,17 @@ public class UserService implements UserDetailsService {
     }
 
     public List<LeaderboardEntryResponse> getLeaderboard() {
-        List<User> users = userRepository.findAllByOrderByTotalScoreDesc();
+        // Chỉ lấy Top 50 học viên xuất sắc nhất bằng 1 CÂU SQL DUY NHẤT
+        List<LeaderboardProjection> topUsers = userRepository.getTopLeaderboard(50);
         int[] rank = {1};
-        return users.stream().map(u -> {
-            long casesCompleted = userCaseProgressRepository.countByUserIdAndStatus(u.getId(), "COMPLETED");
-            return new LeaderboardEntryResponse(rank[0]++, u.getUsername(), u.getTotalScore(), (int) casesCompleted);
-        }).toList();
+        return topUsers.stream()
+                .map(u -> new LeaderboardEntryResponse(
+                        rank[0]++,
+                        u.getUsername(),
+                        u.getTotalScore(),
+                        u.getCasesCompleted().intValue()
+                ))
+                .toList();
     }
 
     @Transactional

@@ -2,6 +2,8 @@ package com.example.be.repository;
 
 import com.example.be.entity.UserCaseProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -27,4 +29,10 @@ public interface UserCaseProgressRepository extends JpaRepository<UserCaseProgre
     long countByUserId(Long userId);
 
     long countByUserIdAndStatus(Long userId, String status);
+
+    @Query("SELECT p FROM UserCaseProgress p " +
+            "JOIN FETCH p.premiumCase " +
+            "JOIN FETCH p.caseQuestion " +
+            "WHERE p.user.id = :userId")
+    List<UserCaseProgress> findByUserIdWithCaseAndQuestion(@Param("userId") Long userId);
 }

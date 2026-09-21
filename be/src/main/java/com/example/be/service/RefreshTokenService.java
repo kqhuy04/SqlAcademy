@@ -16,6 +16,9 @@ import com.example.be.repository.RefreshTokenRepository;
 import com.example.be.util.TokenUtil;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +30,19 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final TokenUtil tokenUtil;
     private final UserEventService userEventService;
+    private final AccessTokenBlocklistService accessTokenBlocklistService;
 
     @Value("${rt.expiration}")
     private Long refreshTokenExpiration;
 
-    RefreshTokenService(RefreshTokenRepository refreshTokenRepository, TokenUtil tokenUtil, UserEventService userEventService) {
+    RefreshTokenService(RefreshTokenRepository refreshTokenRepository,
+                        TokenUtil tokenUtil,
+                        UserEventService userEventService,
+                        AccessTokenBlocklistService accessTokenBlocklistService) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.tokenUtil = tokenUtil;
         this.userEventService = userEventService;
+        this.accessTokenBlocklistService = accessTokenBlocklistService;
     }
 
     public RefreshTokenResponse getRefreshToken(RefreshTokenRequest refreshTokenRequest) {
@@ -58,6 +66,15 @@ public class RefreshTokenService {
     public @Nullable LogoutResponse logout(LogoutRequest logoutRequest) {
         RefreshToken token = refreshTokenRepository.findByToken(logoutRequest.refreshToken()).orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token not found"));
         refreshTokenRepository.delete(token);
+
+        // [FIX PT-05] Also blocklist the current access token so it cannot be reused
+        // after logout even though it hasn't expired yet (access tokens are stateless/JWT).
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getCredentials() instanceof Jwt jwt) {
+            long expEpochSec = jwt.getExpiresAt() != null ? jwt.getExpiresAt().getEpochSecond() : 0L;
+            accessTokenBlocklistService.block(jwt.getTokenValue(), expEpochSec);
+        }
+
         userEventService.logEvent(token.getUser(), UserEventType.LOGOUT, "");
         return new LogoutResponse("You log out successfully");
     }

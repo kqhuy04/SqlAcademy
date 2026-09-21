@@ -1,5 +1,7 @@
 package com.example.be.config;
 
+import com.example.be.security.JwtBlocklistFilter;
+import com.example.be.security.RateLimitingFilter;
 import com.example.be.util.CustomJwtAuthenticationConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -21,31 +24,33 @@ public class SecurityConfig {
 
     private final CustomJwtAuthenticationConverter customJwtAuthenticationConverter;
     private final JwtDecoder jwtDecoder;
-
-    // Đọc từ application.properties — dễ thay đổi theo môi trường (dev/prod)
-    // mà không cần sửa code Java
+    private final RateLimitingFilter rateLimitingFilter;
+    private final JwtBlocklistFilter jwtBlocklistFilter;
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
     public SecurityConfig(CustomJwtAuthenticationConverter customJwtAuthenticationConverter,
-                          JwtDecoder jwtDecoder) {
+                          JwtDecoder jwtDecoder,
+                          RateLimitingFilter rateLimitingFilter,
+                          JwtBlocklistFilter jwtBlocklistFilter) {
         this.customJwtAuthenticationConverter = customJwtAuthenticationConverter;
         this.jwtDecoder = jwtDecoder;
+        this.rateLimitingFilter = rateLimitingFilter;
+        this.jwtBlocklistFilter = jwtBlocklistFilter;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Khai báo CORS ở đây để Spring Security xử lý preflight OPTIONS request
-                // TRƯỚC KHI vào authentication filter.
-                // Nếu không làm vậy, request OPTIONS từ browser sẽ bị block với 401
-                // vì nó không mang Authorization header → FE sẽ báo CORS error dù BE đúng
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(rateLimitingFilter, BearerTokenAuthenticationFilter.class)
+                // [FIX PT-05] Check blocklist before Spring Security processes the JWT
+                .addFilterBefore(jwtBlocklistFilter, BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api/v1/payments/webhook/**").permitAll()
+                                .requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api/v1/payments/webhook/**", "/actuator/health/**").permitAll()
                                 .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
                         .decoder(jwtDecoder)

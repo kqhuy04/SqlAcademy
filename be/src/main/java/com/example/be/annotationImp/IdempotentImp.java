@@ -43,21 +43,17 @@ public class IdempotentImp {
         }
 
         String key = "Task:" + userIdentifier + ":" + uri + ":" + Arrays.deepHashCode(joinPoint.getArgs());
-        IdempotencyService.LockResult lockResult = idempotencyService.checkAndLock(key, idempotent.timeoutProcessing());
-        if (!lockResult.isAllowed() && lockResult.cachedResponse() != null) {
-            return lockResult.cachedResponse();
+        boolean lockResult = idempotencyService.checkAndLock(key, idempotent.timeoutProcessing());
+        if (lockResult == false) {
+            throw new DuplicateRequestException("Request is being processed. Please do not click repeatedly!");
+
         }
 
-        if (!lockResult.isAllowed()) {
-            throw new DuplicateRequestException("Request is being processed. Please do not click repeatedly!");
-        }
         try {
             Object response = joinPoint.proceed();
 
-            idempotencyService.complete(key, response, idempotent.timeoutCompleted());
             return response;
         } catch (Throwable e) {
-
             idempotencyService.remove(key);
             throw e;
         }

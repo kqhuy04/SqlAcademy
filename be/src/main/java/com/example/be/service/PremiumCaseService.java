@@ -11,11 +11,17 @@ import com.example.be.exception.*;
 import com.example.be.repository.*;
 import com.example.be.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
 
 import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -46,6 +52,8 @@ public class PremiumCaseService {
 
     private final UserEventRepository userEventRepository;
 
+    private final RedisTemplate<String, Object> redisTemplate;
+
     PremiumCaseService(PremiumCaseRepository premiumCaseRepository,
                        CaseQuestionRepository caseQuestionRepository,
                        UserCaseProgressRepository userCaseProgressRepository,
@@ -54,7 +62,8 @@ public class PremiumCaseService {
                        CaseColumnRepository caseColumnRepository,
                        @Qualifier("sandboxDataSource") DataSource sandboxDataSource,
                        UserEventService userEventService,
-                       UserEventRepository userEventRepository) {
+                       UserEventRepository userEventRepository,
+                       RedisTemplate redisTemplate) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
         this.userCaseProgressRepository = userCaseProgressRepository;
@@ -64,8 +73,10 @@ public class PremiumCaseService {
         this.sandboxDataSource = sandboxDataSource;
         this.userEventService = userEventService;
         this.userEventRepository = userEventRepository;
+        this.redisTemplate = redisTemplate;
     }
 
+    @Cacheable(cacheNames = "premiumCases", key = "T(com.example.be.util.SecurityUtil).getCurrentUser().getIsPurchased()")
     public PremiumCaseListResponse getPremiumCases() {
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
         List<PremiumCase> premiumCaseList = premiumCaseRepository.findAll();
@@ -87,13 +98,12 @@ public class PremiumCaseService {
                 .toList());
     }
 
+
+    @PreAuthorize("principal.isPurchased == true")
     public PremiumCaseDTO getPremiumCase(Long id) {
         PremiumCase premiumCase = premiumCaseRepository.findById(id).orElseThrow(() -> new PremiumCaseNotFoundException("Premium Case not found"));
         List<CaseQuestion> caseQuestionList = caseQuestionRepository.findByPremiumCaseId(premiumCase.getId());
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
-        if (customUserDetail.getIsPurchased() == false) {
-            throw new SubscriptionNotPurchasedException("Subscription is not purchased");
-        }
         String prefix = "caseId=" + premiumCase.getId() + ",%";
         List<String> unlockedEventMetas = userEventRepository
                 .findMetadataByUserIdAndTypeAndPrefix(customUserDetail.getUserId(), UserEventType.HINT_USED, prefix);
@@ -190,12 +200,9 @@ public class PremiumCaseService {
         return new UnlockHintResponse(request.hintNumber(), hintText, progress.getHintsUsed());
     }
 
+    @PreAuthorize("principal.isPurchased == true")
     public SQLQueryResponse runQuery(SQLQueryRequest sqlQueryRequest) {
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
-        if (customUserDetail.getIsPurchased() == false) {
-            throw new SubscriptionNotPurchasedException("Subcription is not purchased");
-        }
-
         User user = userRepository.findById(customUserDetail.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -226,6 +233,13 @@ public class PremiumCaseService {
             userEventService.logEvent(user, UserEventType.SQL_EXECUTED, "caseId=" + sqlQueryRequest.caseId());
         }
 
+        String normalizedSql = sqlQueryRequest.query().trim().toLowerCase().replaceAll("\\s+", " ");
+        String queryHash = DigestUtils.md5DigestAsHex(normalizedSql.getBytes(StandardCharsets.UTF_8));
+        String cacheKey = "sandbox:case_" + sqlQueryRequest.caseId() + ":" + queryHash;
+        SQLQueryResponse cachedResponse = (SQLQueryResponse) redisTemplate.opsForValue().get(cacheKey);
+        if (cachedResponse != null) {
+            return cachedResponse; // Cache Hit: Trả kết quả ngay, không cần kết nối MySQL!
+        }
         try (Connection conn = sandboxDataSource.getConnection()) {
             String originalCatalog = conn.getCatalog();
             try {
@@ -248,7 +262,10 @@ public class PremiumCaseService {
                             }
                             rows.add(row);
                         }
-                        return new SQLQueryResponse(rows);
+                        SQLQueryResponse response = new SQLQueryResponse(rows);
+                        // 5. Lưu vào Redis với TTL 30 phút
+                        redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(30));
+                        return response;
                     }
                 }
             } finally {
@@ -345,16 +362,14 @@ public class PremiumCaseService {
         return new EndCaseResponse("Correct!", true, scoreEarned);
     }
 
+    @PreAuthorize("principal.isPurchased == true")
+    @Cacheable(cacheNames = "premiumCases:tables", key = "#id")
     public GetTableResponse getTables(Long id) {
         if (!premiumCaseRepository.existsById(id)) {
             throw new PremiumCaseNotFoundException("Premium Case not found");
         }
 
-        // [FIX PT-03] Verify subscription before exposing case table schema
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
-        if (Boolean.FALSE.equals(customUserDetail.getIsPurchased())) {
-            throw new SubscriptionNotPurchasedException("Subscription is not purchased");
-        }
 
         List<CaseTable> caseTableList = caseTableRepository.findByPremiumCaseId(id);
         List<CaseColumn> allColumns = caseColumnRepository.findByCaseTablePremiumCaseId(id);

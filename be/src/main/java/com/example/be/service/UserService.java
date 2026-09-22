@@ -15,6 +15,8 @@ import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import org.jspecify.annotations.Nullable;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +44,8 @@ public class UserService implements UserDetailsService {
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final GoogleAuthService googleAuthService;
 
+    private final RedisTemplate<String, Object> redisTemplate;
+
     UserService(UserRepository userRepository,
                 TokenUtil tokenUtil,
                 PasswordEncoder passwordEncoder,
@@ -51,7 +56,8 @@ public class UserService implements UserDetailsService {
                 UserEventRepository userEventRepository,
                 UserCaseProgressRepository userCaseProgressRepository,
                 PasswordResetTokenRepository passwordResetTokenRepository,
-                GoogleAuthService googleAuthService) {
+                GoogleAuthService googleAuthService,
+                RedisTemplate<String, Object> redisTemplate) {
 
         this.userRepository = userRepository;
         this.tokenUtil = tokenUtil;
@@ -64,6 +70,7 @@ public class UserService implements UserDetailsService {
         this.userCaseProgressRepository = userCaseProgressRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.googleAuthService = googleAuthService;
+        this.redisTemplate = redisTemplate;
     }
 
     @Transactional
@@ -127,14 +134,11 @@ public class UserService implements UserDetailsService {
         if (user == null) {
             return new ForgotPasswordResponse("If your email exits, we sent an introduction to it");
         }
-        String token = UUID.randomUUID().toString().replace("-", "");
-        PasswordResetToken passwordResetToken = PasswordResetToken.builder()
-                .token(token)
-                .expiredAt(LocalDateTime.now().plusMinutes(15))
-                .user(user)
-                .build();
 
-        passwordResetTokenRepository.save(passwordResetToken);
+
+        String token = UUID.randomUUID().toString().replace("-", "");
+
+        redisTemplate.opsForValue().set("pwd_reset:%s".formatted(token), forgotPasswordRequest.email(), Duration.ofMinutes(15));
         emailService.sendNewPasswordEmail(user.getEmail(), token);
         userEventService.logEvent(user, UserEventType.FORGOT_PASSWORD, "");
         return new ForgotPasswordResponse("If your email exits, we sent an introduction to it");
@@ -142,26 +146,24 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public ResetPasswordResponse resetPassword(ResetPasswordRequest resetPasswordRequest) {
-        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(resetPasswordRequest.token()).orElseThrow(() -> new PasswordResetTokenNotFound("Password reset token not found"));
-        if (passwordResetToken.getExpiredAt().isAfter(LocalDateTime.now()) && passwordResetToken.getUsed() == Boolean.FALSE) {
-            User user = passwordResetToken.getUser();
+        Object o = redisTemplate.opsForValue().getAndDelete("pwd_reset:%s".formatted(resetPasswordRequest.token()));
+        if (o == null) {
+            throw new PasswordResetTokenExpiredException("Password reset token is expired or your email was wrong");
+        }
+        if (o instanceof String email) {
+
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("Email not found"));
             user.setPasswordHash(passwordEncoder.encode(resetPasswordRequest.newPassword()));
             userRepository.save(user);
 
             List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(user.getId());
             refreshTokenList.stream().forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
-
-            passwordResetToken.setUsed(Boolean.TRUE);
-            passwordResetTokenRepository.save(passwordResetToken);
-
             userEventService.logEvent(user, UserEventType.RESET_PASSWORD, "");
 
             return new ResetPasswordResponse("You change to new password successfully");
         } else {
-            throw new PasswordResetTokenExpiredException("Password reset token is expired");
+            throw new RuntimeException("Object is not a instance of String");
         }
-
-
     }
 
     @Transactional
@@ -204,8 +206,9 @@ public class UserService implements UserDetailsService {
         )).toList();
     }
 
+    @Cacheable(cacheNames = "leaderboard", key = "'top50'", sync = true)
     public List<LeaderboardEntryResponse> getLeaderboard() {
-        // Chỉ lấy Top 50 học viên xuất sắc nhất bằng 1 CÂU SQL DUY NHẤT
+        //System.out.println(">>> [DEBUG] ĐANG TRUY VẤN DATABASE MYSQL ĐỂ TÍNH ĐIỂM...");
         List<LeaderboardProjection> topUsers = userRepository.getTopLeaderboard(50);
         int[] rank = {1};
         return topUsers.stream()

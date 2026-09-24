@@ -1,7 +1,10 @@
 package com.example.be.annotationImp;
 
 import com.example.be.enums.Status;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter

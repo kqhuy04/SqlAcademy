@@ -1,13 +1,10 @@
 package com.example.be;
 
+import com.example.be.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.propertyeditors.ReaderEditor;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
-import com.example.be.service.AccessTokenBlocklistService;
-import java.time.Instant;
-import com.example.be.service.UserService;
 
 @SpringBootTest
 class BeApplicationTests {
@@ -36,9 +33,26 @@ class BeApplicationTests {
         System.out.println("================ LẦN GỌI 1 ================");
         var list1 = userService.getLeaderboard();
         System.out.println("Lấy được: " + list1.size() + " học viên.");
+    }
 
-        System.out.println("\n================ LẦN GỌI 2 ================");
-        var list2 = userService.getLeaderboard();
-        System.out.println("Lấy được: " + list2.size() + " học viên.");
+    @Autowired
+    private com.example.be.service.PremiumCaseService premiumCaseService;
+
+    @Test
+    void testSerializationPremiumCases() {
+        var serializer = org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer.builder()
+                .enableSpringCacheNullValueSupport()
+                .enableUnsafeDefaultTyping()
+                .build();
+        var dto = com.example.be.dto.response.PremiumCaseDTO.builder()
+                .id(1L)
+                .title("Test")
+                .build();
+        var original = new com.example.be.dto.response.PremiumCaseListResponse(java.util.List.of(dto));
+        byte[] bytes = serializer.serialize(original);
+        System.out.println("JSON: " + new String(bytes));
+        Object deserialized = serializer.deserialize(bytes);
+        System.out.println("Deserialized type: " + deserialized.getClass().getName());
+        org.junit.jupiter.api.Assertions.assertInstanceOf(com.example.be.dto.response.PremiumCaseListResponse.class, deserialized);
     }
 }

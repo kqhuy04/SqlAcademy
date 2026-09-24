@@ -30,9 +30,11 @@ public interface UserCaseProgressRepository extends JpaRepository<UserCaseProgre
 
     long countByUserIdAndStatus(Long userId, String status);
 
-    @Query("SELECT p FROM UserCaseProgress p " +
-            "JOIN FETCH p.premiumCase " +
-            "JOIN FETCH p.caseQuestion " +
-            "WHERE p.user.id = :userId")
+    @Query("""
+            SELECT p FROM UserCaseProgress p \
+            JOIN FETCH p.premiumCase \
+            JOIN FETCH p.caseQuestion \
+            WHERE p.user.id = :userId\
+            """)
     List<UserCaseProgress> findByUserIdWithCaseAndQuestion(@Param("userId") Long userId);
 }

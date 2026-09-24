@@ -27,7 +27,10 @@ public class RedisConfig {
         template.setHashKeySerializer(stringSerializer);
 
 
-        GenericJacksonJsonRedisSerializer jsonSerializer = GenericJacksonJsonRedisSerializer.builder().build();
+        GenericJacksonJsonRedisSerializer jsonSerializer = GenericJacksonJsonRedisSerializer.builder()
+                .enableSpringCacheNullValueSupport()
+                .enableUnsafeDefaultTyping()
+                .build();
         template.setValueSerializer(jsonSerializer);
         template.setHashValueSerializer(jsonSerializer);
 
@@ -37,7 +40,10 @@ public class RedisConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
-        GenericJacksonJsonRedisSerializer jsonSerializer = GenericJacksonJsonRedisSerializer.builder().build();
+        GenericJacksonJsonRedisSerializer jsonSerializer = GenericJacksonJsonRedisSerializer.builder()
+                .enableSpringCacheNullValueSupport()
+                .enableUnsafeDefaultTyping()
+                .build();
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10)) // TTL mặc định: dữ liệu trong cache sống 10 phút
                 .disableCachingNullValues()       // Nếu hàm trả về null thì không lưu vào cache
@@ -46,7 +52,6 @@ public class RedisConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)
                 .withCacheConfiguration("premiumCases", config.entryTtl(Duration.ofHours(24)))
-                .withCacheConfiguration("leaderboard", config.entryTtl(Duration.ofMinutes(5)))
                 .withCacheConfiguration("leaderboard", config.entryTtl(Duration.ofMinutes(5)))
                 .build();
     }

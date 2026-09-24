@@ -14,7 +14,7 @@ public class SandboxDataSourceConfig {
     private String url;
     @Value("${sandbox.datasource.username:student_sandbox}")
     private String username;
-    @Value("${sandbox.datasource.password:SafeSandboxPass2026!}")
+    @Value("${sandbox.datasource.password}")
     private String password;
     @Value("${sandbox.datasource.hikari.maximum-pool-size:5}")
     private int maxPoolSize;

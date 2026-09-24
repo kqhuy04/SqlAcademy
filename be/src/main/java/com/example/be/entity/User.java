@@ -74,6 +74,7 @@ public class User {
 
     @Version
     @Column(name = "version")
-    private Long version;
+    @Builder.Default
+    private Long version = 0L;
 
 }

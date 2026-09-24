@@ -1,14 +1,16 @@
 package com.example.be.controller;
 
 import com.example.be.annotation.Idempotent;
-import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.EndCaseRequest;
+import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.UnlockHintRequest;
 import com.example.be.dto.response.*;
 import com.example.be.service.PremiumCaseService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +27,10 @@ public class PremiumCaseController {
     }
 
     @GetMapping("/premium_cases")
-    public ResponseEntity<PremiumCaseListResponse> getPremiumCases() {
-        return ResponseEntity.ok(premiumCaseService.getPremiumCases());
+    public ResponseEntity<PremiumCaseListResponse> getPremiumCases(
+            @PageableDefault(page = 0, size = 12, sort = "id") Pageable pageable
+    ) {
+        return ResponseEntity.ok(premiumCaseService.getPremiumCases(pageable));
     }
 
     @GetMapping("/premium_cases/{id}")

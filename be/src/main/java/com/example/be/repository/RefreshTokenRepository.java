@@ -13,7 +13,8 @@ import java.util.Optional;
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
     List<RefreshToken> findByUserId(Long userId);
 
-    Optional<RefreshToken> findByToken(String refreshToken);
+    @Query("SELECT r FROM RefreshToken r JOIN FETCH r.user WHERE r.token = :refreshToken")
+    Optional<RefreshToken> findByToken(@Param("refreshToken") String refreshToken);
 
     @Modifying
     @Query("DELETE FROM RefreshToken u where u.expiredAt < :now")

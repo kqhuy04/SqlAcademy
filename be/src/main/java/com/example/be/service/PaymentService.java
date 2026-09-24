@@ -16,13 +16,13 @@ import com.example.be.strategy.payment.PaymentGatewayStrategy;
 import com.example.be.strategy.payment.PaymentStrategyFactory;
 import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.crypto.SecretKey;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -36,18 +36,21 @@ public class PaymentService {
     private final PaymentStrategyFactory strategyFactory;
     private final UserEventService userEventService;
     private final TokenUtil tokenUtil;
+    private final RedisTemplate redisTemplate;
     public PaymentService(OrderRepository orderRepository,
                           PaymentTransactionRepository transactionRepository,
                           UserRepository userRepository,
                           PaymentStrategyFactory strategyFactory,
                           UserEventService userEventService,
-                          TokenUtil tokenUtil) {
+                          TokenUtil tokenUtil,
+                          RedisTemplate redisTemplate) {
         this.orderRepository = orderRepository;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.strategyFactory = strategyFactory;
         this.userEventService = userEventService;
         this.tokenUtil = tokenUtil;
+        this.redisTemplate = redisTemplate;
     }
 
     @Transactional
@@ -107,19 +110,22 @@ public class PaymentService {
                 .build();
 
         transactionRepository.save(tx);
+        redisTemplate.opsForValue().set("isPurchased:" + user.getId(), Boolean.TRUE, Duration.ofMinutes(10));
         userEventService.logEvent(user, UserEventType.SUBSCRIPTIONS, "Purchased via " + gateway);
     }
 
     public Map<String, Object> getOrderStatus(Long orderCode) {
         Order order = orderRepository.findByOrderCode(orderCode).orElseThrow(() -> new BadRequestException("Order not found"));
-        if (order.getStatus() == OrderStatus.PAID) {
-            CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
-            if (customUserDetail.getUserId() == order.getUser().getId()) {
-                customUserDetail.setIsPurchased(Boolean.TRUE);
-                String accessToken = tokenUtil.generateAccessToken(customUserDetail);
-                return Map.of("Order code", orderCode, "Status", order.getStatus(), "Access token", accessToken);
-            }
+        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
+        if (!customUserDetail.getUserId().equals(order.getUser().getId())) {
+            throw new BadRequestException("Access denied to this order");
+        }
 
+        if (order.getStatus() == OrderStatus.PAID) {
+            customUserDetail.setIsPurchased(Boolean.TRUE);
+            redisTemplate.opsForValue().set("isPurchased:" + customUserDetail.getUserId(), Boolean.TRUE, Duration.ofMinutes(10));
+            String accessToken = tokenUtil.generateAccessToken(customUserDetail);
+            return Map.of("Order code", orderCode, "Status", order.getStatus(), "Access token", accessToken);
         }
         return Map.of("Order code", orderCode, "Status", order.getStatus());
     }

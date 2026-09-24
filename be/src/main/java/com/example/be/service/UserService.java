@@ -4,13 +4,14 @@ import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.LeaderboardProjection;
 import com.example.be.dto.request.*;
 import com.example.be.dto.response.*;
-import com.example.be.entity.*;
+import com.example.be.entity.RefreshToken;
+import com.example.be.entity.User;
+import com.example.be.entity.UserCaseProgress;
 import com.example.be.enums.AuthProvider;
 import com.example.be.enums.Role;
 import com.example.be.enums.UserEventType;
 import com.example.be.exception.*;
 import com.example.be.repository.*;
-import com.example.be.util.PasswordGenerator;
 import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -25,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -104,7 +104,7 @@ public class UserService implements UserDetailsService {
         String accessToken = tokenUtil.generateAccessToken(userDetails);
         String refreshToken = refreshTokenService.generateRefreshToken(user);
         userEventService.logEvent(user, UserEventType.LOGIN, "");
-        return new LoginResponse(accessToken, refreshToken);
+        return new LoginResponse(accessToken, refreshToken, UserProfileResponse.from(user));
     }
 
     @Transactional
@@ -202,11 +202,11 @@ public class UserService implements UserDetailsService {
                 p.getScoreEarned(),
                 p.getHintsUsed(),
                 p.getAttempts(),
-                p.getCompletedAt()
+                p.getCompletedAt(),
+                p.getStatus()
         )).toList();
     }
 
-    @Cacheable(cacheNames = "leaderboard", key = "'top50'", sync = true)
     public List<LeaderboardEntryResponse> getLeaderboard() {
         //System.out.println(">>> [DEBUG] ĐANG TRUY VẤN DATABASE MYSQL ĐỂ TÍNH ĐIỂM...");
         List<LeaderboardProjection> topUsers = userRepository.getTopLeaderboard(50);
@@ -283,7 +283,7 @@ public class UserService implements UserDetailsService {
         String accessToken = tokenUtil.generateAccessToken(userDetails);
         String refreshToken = refreshTokenService.generateRefreshToken(user);
         userEventService.logEvent(user, UserEventType.LOGIN, "Logged in via Google OAuth");
-        return new LoginResponse(accessToken, refreshToken);
+        return new LoginResponse(accessToken, refreshToken, UserProfileResponse.from(user));
     }
     private String generateUniqueUsername(String email) {
         String baseName = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");

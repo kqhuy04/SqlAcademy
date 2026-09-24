@@ -1,17 +1,22 @@
 package com.example.be.service;
 
 import com.example.be.dto.CustomUserDetail;
-import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.EndCaseRequest;
+import com.example.be.dto.request.SQLQueryRequest;
 import com.example.be.dto.request.UnlockHintRequest;
 import com.example.be.dto.response.*;
 import com.example.be.entity.*;
 import com.example.be.enums.UserEventType;
-import com.example.be.exception.*;
+import com.example.be.exception.BadRequestException;
+import com.example.be.exception.CaseQuestionNotFoundException;
+import com.example.be.exception.PremiumCaseNotFoundException;
+import com.example.be.exception.UserNotFoundException;
 import com.example.be.repository.*;
 import com.example.be.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -23,16 +28,13 @@ import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class PremiumCaseService {
+
+    public static final Set<Long> FREE_CASE_IDS = Set.of(1L, 2L, 3L, 4L);
 
     private final PremiumCaseRepository premiumCaseRepository;
 
@@ -76,11 +78,15 @@ public class PremiumCaseService {
         this.redisTemplate = redisTemplate;
     }
 
-    @Cacheable(cacheNames = "premiumCases", key = "T(com.example.be.util.SecurityUtil).getCurrentUser().getIsPurchased()")
-    public PremiumCaseListResponse getPremiumCases() {
-        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
-        List<PremiumCase> premiumCaseList = premiumCaseRepository.findAll();
-        return new PremiumCaseListResponse(premiumCaseList.stream().map(
+    @Cacheable(
+            cacheNames = "premiumCases",
+            key = "(T(com.example.be.util.SecurityUtil).getCurrentUserOrNull() != null && Boolean.TRUE.equals(T(com.example.be.util.SecurityUtil).getCurrentUserOrNull().getIsPurchased())) + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort"
+    )
+    public PremiumCaseListResponse getPremiumCases(Pageable pageable) {
+        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUserOrNull();
+        boolean isPurchased = customUserDetail != null && Boolean.TRUE.equals(customUserDetail.getIsPurchased());
+        Page<PremiumCase> pageResult = premiumCaseRepository.findAll(pageable);
+        List<PremiumCaseDTO> content = pageResult.getContent().stream().map(
                         premiumCase -> PremiumCaseDTO.builder()
                                 .id(premiumCase.getId())
                                 .title(premiumCase.getTitle())
@@ -92,14 +98,22 @@ public class PremiumCaseService {
                                 .badgeName(premiumCase.getBadgeName())
                                 .badgeIcon(premiumCase.getBadgeIcon())
                                 .questionCount(premiumCase.getQuestionCount())
-                                .isUnlocked(customUserDetail.getIsPurchased())
+                                .isUnlocked(isPurchased || FREE_CASE_IDS.contains(premiumCase.getId()))
                                 .caseQuestionDTOList(null)
                                 .build())
-                .toList());
+                .toList();
+
+        return new PremiumCaseListResponse(
+                content,
+                pageResult.getNumber(),
+                pageResult.getTotalPages(),
+                pageResult.getTotalElements(),
+                pageResult.hasNext()
+        );
     }
 
 
-    @PreAuthorize("principal.isPurchased == true")
+    @PreAuthorize("principal.isPurchased == true or T(com.example.be.service.PremiumCaseService).FREE_CASE_IDS.contains(#id)")
     public PremiumCaseDTO getPremiumCase(Long id) {
         PremiumCase premiumCase = premiumCaseRepository.findById(id).orElseThrow(() -> new PremiumCaseNotFoundException("Premium Case not found"));
         List<CaseQuestion> caseQuestionList = caseQuestionRepository.findByPremiumCaseId(premiumCase.getId());
@@ -145,17 +159,15 @@ public class PremiumCaseService {
                 .badgeName(premiumCase.getBadgeName())
                 .badgeIcon(premiumCase.getBadgeIcon())
                 .questionCount(premiumCase.getQuestionCount())
-                .isUnlocked(customUserDetail.getIsPurchased())
+                .isUnlocked(customUserDetail.getIsPurchased() || FREE_CASE_IDS.contains(premiumCase.getId()))
                 .caseQuestionDTOList(list)
                 .build();
     }
 
+    @PreAuthorize("principal.isPurchased == true or T(com.example.be.service.PremiumCaseService).FREE_CASE_IDS.contains(#request.caseId)")
     @Transactional
     public UnlockHintResponse unlockHint(UnlockHintRequest request) {
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
-        if (Boolean.FALSE.equals(customUserDetail.getIsPurchased())) {
-            throw new SubscriptionNotPurchasedException("Subcription is not purchased");
-        }
 
         User user = userRepository.findById(customUserDetail.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -200,8 +212,9 @@ public class PremiumCaseService {
         return new UnlockHintResponse(request.hintNumber(), hintText, progress.getHintsUsed());
     }
 
-    @PreAuthorize("principal.isPurchased == true")
+    @PreAuthorize("principal.isPurchased == true or T(com.example.be.service.PremiumCaseService).FREE_CASE_IDS.contains(#sqlQueryRequest.caseId)")
     public SQLQueryResponse runQuery(SQLQueryRequest sqlQueryRequest) {
+        validateCaseIsolation(sqlQueryRequest.caseId(), sqlQueryRequest.query());
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
         User user = userRepository.findById(customUserDetail.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -280,6 +293,7 @@ public class PremiumCaseService {
 
     }
 
+    @PreAuthorize("principal.isPurchased == true or T(com.example.be.service.PremiumCaseService).FREE_CASE_IDS.contains(#endCaseRequest.caseId)")
     @Transactional
     public EndCaseResponse endCase(EndCaseRequest endCaseRequest) {
         CaseQuestion caseQuestion = caseQuestionRepository
@@ -362,7 +376,7 @@ public class PremiumCaseService {
         return new EndCaseResponse("Correct!", true, scoreEarned);
     }
 
-    @PreAuthorize("principal.isPurchased == true")
+    @PreAuthorize("principal.isPurchased == true or T(com.example.be.service.PremiumCaseService).FREE_CASE_IDS.contains(#id)")
     @Cacheable(cacheNames = "premiumCases:tables", key = "#id")
     public GetTableResponse getTables(Long id) {
         if (!premiumCaseRepository.existsById(id)) {
@@ -403,5 +417,17 @@ public class PremiumCaseService {
                                 .build())
                         .toList()
         );
+    }
+
+    private void validateCaseIsolation(Long activeCaseId, String query) {
+        if (query == null || activeCaseId == null) return;
+        String cleanSql = query.replace("`", "");
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?i)\\bcase_(\\d+)\\b").matcher(cleanSql);
+        while (matcher.find()) {
+            long referencedCaseId = Long.parseLong(matcher.group(1));
+            if (referencedCaseId != activeCaseId) {
+                throw new BadRequestException("Cross-case database access is prohibited. Cannot query schema 'case_" + referencedCaseId + "' from case " + activeCaseId);
+            }
+        }
     }
 }

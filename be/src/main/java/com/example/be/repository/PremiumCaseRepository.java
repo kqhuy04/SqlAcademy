@@ -18,7 +18,4 @@ public interface PremiumCaseRepository extends JpaRepository<PremiumCase, Long> 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT o FROM Order o WHERE o.orderCode = :orderCode")
     Optional<Order> findByOrderCodeWithLock(@Param("orderCode") Long orderCode);
-
-
-
 }

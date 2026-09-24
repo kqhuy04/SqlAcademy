@@ -45,6 +45,7 @@ public class RefreshTokenService {
         this.accessTokenBlocklistService = accessTokenBlocklistService;
     }
 
+    @Transactional(readOnly = true)
     public RefreshTokenResponse getRefreshToken(RefreshTokenRequest refreshTokenRequest) {
         String userToken = refreshTokenRequest.refreshToken();
         RefreshToken dbToken = refreshTokenRepository.findByToken(userToken).orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token not found"));
@@ -79,6 +80,7 @@ public class RefreshTokenService {
         return new LogoutResponse("You log out successfully");
     }
 
+    @Transactional
     public String generateRefreshToken(User user) {
         String refreshToken = tokenUtil.generateRefreshToken();
         RefreshToken saved = refreshTokenRepository.save(RefreshToken.builder()

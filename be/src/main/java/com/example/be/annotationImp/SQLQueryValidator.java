@@ -3,6 +3,7 @@ package com.example.be.annotationImp;
 import com.example.be.annotation.SQLQueryValid;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+
 import java.util.List;
 
 public class SQLQueryValidator implements ConstraintValidator<SQLQueryValid, String> {
@@ -50,9 +51,10 @@ public class SQLQueryValidator implements ConstraintValidator<SQLQueryValid, Str
             }
         }
 
-        // 4. Kiểm tra schema bị cấm
+        // 4. Kiểm tra schema bị cấm (loại bỏ backtick để chống obfuscation)
+        String unquoted = normalized.replace("`", "");
         for (String schema : FORBIDDEN_SCHEMAS) {
-            if (normalized.matches("(?s).*\\b" + schema + "\\b.*")) {
+            if (unquoted.matches("(?s).*\\b" + schema + "\\b.*")) {
                 buildMessage(constraintValidatorContext, "FORBIDDEN SCHEMAS detected: " + schema);
                 return false;
             }

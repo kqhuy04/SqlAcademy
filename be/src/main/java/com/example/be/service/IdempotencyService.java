@@ -1,13 +1,10 @@
 package com.example.be.service;
 
 import com.example.be.annotationImp.IdempotencyRecord;
-import com.example.be.enums.Status;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service

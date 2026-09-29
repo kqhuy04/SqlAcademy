@@ -61,6 +61,9 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<RefreshToken> refreshTokens;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserBadge> badges;
+
     @Column(name = "provider_id")
     private String providerId;
 

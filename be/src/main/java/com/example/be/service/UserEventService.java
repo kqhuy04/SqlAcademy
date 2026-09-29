@@ -16,11 +16,33 @@ public class UserEventService {
     }
 
     public void logEvent(User user, UserEventType userEventType, String metadata) {
+        Long caseId = extractLongParam(metadata, "caseId=");
+        Long questionId = extractLongParam(metadata, "questionId=");
+        logEvent(user, userEventType, caseId, questionId, metadata);
+    }
+
+    public void logEvent(User user, UserEventType userEventType, Long caseId, Long questionId, String metadata) {
         UserEvent userEvent = UserEvent.builder()
                 .user(user)
                 .userEventType(userEventType)
+                .caseId(caseId)
+                .questionId(questionId)
                 .metadata(metadata)
                 .build();
         userEventRepository.save(userEvent);
+    }
+
+    private Long extractLongParam(String metadata, String key) {
+        if (metadata == null || !metadata.contains(key)) {
+            return null;
+        }
+        try {
+            int start = metadata.indexOf(key) + key.length();
+            int end = metadata.indexOf(',', start);
+            String value = end == -1 ? metadata.substring(start) : metadata.substring(start, end);
+            return Long.parseLong(value.trim());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -31,6 +31,12 @@ public class UserEvent {
     @Column(name = "user_event_type", nullable = false)
     private UserEventType userEventType;
 
+    @Column(name = "case_id")
+    private Long caseId;
+
+    @Column(name = "question_id")
+    private Long questionId;
+
     @Column(name = "metadata")
     private String metadata;
 

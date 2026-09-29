@@ -41,6 +41,9 @@ public class CaseQuestion {
     @Column(name = "skill_tags")
     private String skillTags;
 
+    @OneToMany(mappedBy = "caseQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<CaseQuestionSkill> skills;
+
     @Column(name = "expected_output")
     private String expectedOutput;
 }

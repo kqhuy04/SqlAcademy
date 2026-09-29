@@ -56,6 +56,8 @@ public class PremiumCaseService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
+    private final com.example.be.repository.UserBadgeRepository userBadgeRepository;
+
     PremiumCaseService(PremiumCaseRepository premiumCaseRepository,
                        CaseQuestionRepository caseQuestionRepository,
                        UserCaseProgressRepository userCaseProgressRepository,
@@ -65,7 +67,8 @@ public class PremiumCaseService {
                        @Qualifier("sandboxDataSource") DataSource sandboxDataSource,
                        UserEventService userEventService,
                        UserEventRepository userEventRepository,
-                       RedisTemplate redisTemplate) {
+                       RedisTemplate redisTemplate,
+                       com.example.be.repository.UserBadgeRepository userBadgeRepository) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
         this.userCaseProgressRepository = userCaseProgressRepository;
@@ -76,6 +79,7 @@ public class PremiumCaseService {
         this.userEventService = userEventService;
         this.userEventRepository = userEventRepository;
         this.redisTemplate = redisTemplate;
+        this.userBadgeRepository = userBadgeRepository;
     }
 
     @Cacheable(
@@ -175,6 +179,10 @@ public class PremiumCaseService {
         CaseQuestion caseQuestion = caseQuestionRepository.findById(request.questionId())
                 .orElseThrow(() -> new CaseQuestionNotFoundException("Question not found"));
 
+        if (!caseQuestion.getPremiumCase().getId().equals(request.caseId())) {
+            throw new BadRequestException("Question does not belong to the specified case");
+        }
+
         String hintText = switch (request.hintNumber()) {
             case 1 -> caseQuestion.getHint1();
             case 2 -> caseQuestion.getHint2();
@@ -220,25 +228,27 @@ public class PremiumCaseService {
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         if (sqlQueryRequest.questionId() != null) {
-            CaseQuestion caseQuestion = caseQuestionRepository.findById(sqlQueryRequest.questionId()).orElse(null);
-            if (caseQuestion != null) {
-                UserCaseProgress progress = userCaseProgressRepository
-                        .findByUserIdAndCaseQuestionId(user.getId(), caseQuestion.getId())
-                        .orElseGet(() -> UserCaseProgress.builder()
-                                .user(user)
-                                .premiumCase(caseQuestion.getPremiumCase())
-                                .caseQuestion(caseQuestion)
-                                .status("IN_PROGRESS")
-                                .hintsUsed(0)
-                                .attempts(0)
-                                .scoreEarned(0)
-                                .build());
+            CaseQuestion caseQuestion = caseQuestionRepository.findById(sqlQueryRequest.questionId())
+                    .orElseThrow(() -> new CaseQuestionNotFoundException("Question not found"));
+            if (!caseQuestion.getPremiumCase().getId().equals(sqlQueryRequest.caseId())) {
+                throw new BadRequestException("Question does not belong to the specified case");
+            }
+            UserCaseProgress progress = userCaseProgressRepository
+                    .findByUserIdAndCaseQuestionId(user.getId(), caseQuestion.getId())
+                    .orElseGet(() -> UserCaseProgress.builder()
+                            .user(user)
+                            .premiumCase(caseQuestion.getPremiumCase())
+                            .caseQuestion(caseQuestion)
+                            .status("IN_PROGRESS")
+                            .hintsUsed(0)
+                            .attempts(0)
+                            .scoreEarned(0)
+                            .build());
 
-                if (!"COMPLETED".equalsIgnoreCase(progress.getStatus())) {
-                    int attempts = progress.getAttempts() != null ? progress.getAttempts() : 0;
-                    progress.setAttempts(attempts + 1);
-                    userCaseProgressRepository.save(progress);
-                }
+            if (!"COMPLETED".equalsIgnoreCase(progress.getStatus())) {
+                int attempts = progress.getAttempts() != null ? progress.getAttempts() : 0;
+                progress.setAttempts(attempts + 1);
+                userCaseProgressRepository.save(progress);
             }
             String meta = "caseId=" + sqlQueryRequest.caseId() + ",questionId=" + sqlQueryRequest.questionId();
             userEventService.logEvent(user, UserEventType.SQL_EXECUTED, meta);
@@ -299,6 +309,10 @@ public class PremiumCaseService {
         CaseQuestion caseQuestion = caseQuestionRepository
                 .findById(endCaseRequest.questionId())
                 .orElseThrow(() -> new CaseQuestionNotFoundException("Question not found"));
+
+        if (!caseQuestion.getPremiumCase().getId().equals(endCaseRequest.caseId())) {
+            throw new BadRequestException("Question does not belong to the specified case");
+        }
 
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
         User user = userRepository.findById(customUserDetail.getUserId())
@@ -365,6 +379,12 @@ public class PremiumCaseService {
                         ? premiumCase.getBadgeIcon()
                         : existing + "," + premiumCase.getBadgeIcon();
                 user.setBadgesEarned(updated);
+                if (!userBadgeRepository.existsByUserIdAndBadgeCode(user.getId(), premiumCase.getBadgeIcon())) {
+                    userBadgeRepository.save(com.example.be.entity.UserBadge.builder()
+                            .user(user)
+                            .badgeCode(premiumCase.getBadgeIcon())
+                            .build());
+                }
             }
         }
 

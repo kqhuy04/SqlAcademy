@@ -90,10 +90,10 @@ export const CaseCard: React.FC<CaseCardProps> = ({
 
           {caseData.badgeName && (
             <div
-              className="flex items-center gap-1 text-[10px] font-typewriter text-noir-candle border border-dashed border-noir-borderDark px-1.5 py-0.5 rounded bg-noir-parchment/60 shrink-0 self-start"
+              className="flex items-center gap-1 text-[10px] font-typewriter text-noir-candleDark border border-dashed border-noir-borderDark px-1.5 py-0.5 rounded bg-noir-parchment/60 shrink-0 self-start"
               title={`${lang === 'VI' ? 'Phần thưởng' : 'Reward'}: ${caseData.badgeName}`}
             >
-              <Award className="w-3.5 h-3.5 text-noir-candle" />
+              <Award className="w-3.5 h-3.5 text-noir-candleDark" />
             </div>
           )}
         </div>

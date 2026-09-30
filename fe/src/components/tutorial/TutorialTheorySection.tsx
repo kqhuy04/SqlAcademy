@@ -242,9 +242,9 @@ export const TutorialTheorySection: React.FC<TutorialTheorySectionProps> = ({
                           currentLesson.interactiveExample &&
                           onRunExample(currentLesson.interactiveExample.query)
                         }
-                        className="h-7 text-xs px-2.5 flex items-center gap-1.5 border-noir-candle text-noir-candle hover:bg-noir-candle/15 font-bold"
+                        className="h-7 text-xs px-2.5 flex items-center gap-1.5 border-noir-candleDark/60 text-noir-candleDark hover:bg-noir-candle/15 font-bold"
                       >
-                        <Play className="w-3 h-3 fill-noir-candle" />
+                        <Play className="w-3 h-3 fill-noir-candleDark" />
                         <span>{lang === 'VI' ? 'Chạy thử ⬇' : 'Run ⬇'}</span>
                       </Button>
                     </div>

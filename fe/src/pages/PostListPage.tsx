@@ -84,7 +84,7 @@ export const PostListPage: React.FC = () => {
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <div className="flex items-center gap-2 text-xs font-typewriter font-bold text-noir-wax tracking-widest uppercase mb-1">
+                <div className="flex items-center gap-2 text-xs font-typewriter font-bold text-noir-blood tracking-widest uppercase mb-1">
                   <Newspaper className="w-4 h-4" />
                   <span>{lang === 'VI' ? 'HỒ SƠ BẢN TIN ĐIỀU TRA' : 'DETECTIVE DISPATCHES & INTEL'}</span>
                 </div>
@@ -105,7 +105,7 @@ export const PostListPage: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      leftIcon={<ShieldCheck className="w-4 h-4 text-noir-wax" />}
+                      leftIcon={<ShieldCheck className="w-4 h-4 text-noir-blood" />}
                       className="text-xs font-typewriter"
                     >
                       {lang === 'VI' ? 'Duyệt Hồ Sơ' : 'Review Queue'}
@@ -141,7 +141,7 @@ export const PostListPage: React.FC = () => {
                 className={`px-3 py-1.5 rounded-sm text-xs font-typewriter uppercase tracking-wider transition-colors whitespace-nowrap font-bold ${
                   currentTab === 'all'
                     ? 'bg-noir-blood text-white shadow-sm'
-                    : 'text-noir-ink hover:bg-noir-paperDark/70'
+                    : 'text-noir-ink hover:bg-noir-cardHover'
                 }`}
               >
                 {lang === 'VI' ? 'Tất cả bài viết' : 'All Dispatches'}
@@ -154,7 +154,7 @@ export const PostListPage: React.FC = () => {
                     className={`px-3 py-1.5 rounded-sm text-xs font-typewriter uppercase tracking-wider transition-colors whitespace-nowrap font-bold ${
                       currentTab === 'my'
                         ? 'bg-noir-blood text-white shadow-sm'
-                        : 'text-noir-ink hover:bg-noir-paperDark/70'
+                        : 'text-noir-ink hover:bg-noir-cardHover'
                     }`}
                   >
                     {lang === 'VI' ? 'Bản tin của tôi' : 'My Dispatches'}
@@ -164,7 +164,7 @@ export const PostListPage: React.FC = () => {
                     className={`px-3 py-1.5 rounded-sm text-xs font-typewriter uppercase tracking-wider transition-colors whitespace-nowrap font-bold ${
                       currentTab === 'bookmarks'
                         ? 'bg-noir-blood text-white shadow-sm'
-                        : 'text-noir-ink hover:bg-noir-paperDark/70'
+                        : 'text-noir-ink hover:bg-noir-cardHover'
                     }`}
                   >
                     {lang === 'VI' ? 'Đã đánh dấu lưu' : 'Saved Bookmarks'}
@@ -189,8 +189,8 @@ export const PostListPage: React.FC = () => {
                     onClick={() => handleTagClick(t.name)}
                     className={`text-xs font-typewriter px-2.5 py-1 rounded-sm border transition-all ${
                       isActive
-                        ? 'bg-noir-wax text-white border-noir-waxDark shadow-sm font-bold'
-                        : 'bg-noir-paperDark/50 text-noir-ink border-noir-borderDark hover:bg-noir-paperDark'
+                        ? 'bg-noir-blood text-white border-noir-bloodDark shadow-sm font-bold'
+                        : 'bg-noir-card/50 text-noir-ink border-noir-borderDark hover:bg-noir-cardHover'
                     }`}
                   >
                     #{t.name}
@@ -290,7 +290,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, lang, isMyTab }) => {
     <article className="bg-noir-card border-2 border-noir-borderDark rounded-md overflow-hidden shadow-noir-sm hover:shadow-noir-md hover:-translate-y-1 transition-all duration-200 flex flex-col group relative">
       {/* Top status banner if My Posts tab */}
       {isMyTab && (
-        <div className="px-3 py-1 bg-noir-paperDark border-b border-noir-borderDark flex items-center justify-between text-[11px] font-typewriter font-bold">
+        <div className="px-3 py-1 bg-noir-card border-b border-noir-borderDark flex items-center justify-between text-[11px] font-typewriter font-bold">
           <span>{lang === 'VI' ? 'TRẠNG THÁI:' : 'STATUS:'}</span>
           <span
             className={
@@ -309,7 +309,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, lang, isMyTab }) => {
       )}
 
       {/* Thumbnail */}
-      <Link to={`/posts/${post.slug}`} className="block relative aspect-video overflow-hidden bg-noir-paperDark border-b border-noir-borderDark">
+      <Link to={`/posts/${post.slug}`} className="block relative aspect-video overflow-hidden bg-noir-card border-b border-noir-borderDark">
         {post.thumbnailUrl ? (
           <img
             src={post.thumbnailUrl}
@@ -350,7 +350,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, lang, isMyTab }) => {
               {post.tags.slice(1, 4).map((tag, idx) => (
                 <span
                   key={idx}
-                  className="text-[10px] font-typewriter text-noir-inkMuted bg-noir-paperDark/70 px-1.5 py-0.5 rounded border border-noir-borderDark/40"
+                  className="text-[10px] font-typewriter text-noir-inkMuted bg-noir-card/70 px-1.5 py-0.5 rounded border border-noir-borderDark/40"
                 >
                   #{tag}
                 </span>
@@ -363,7 +363,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, lang, isMyTab }) => {
         <div className="mt-4 pt-3 border-t border-noir-borderDark/50 flex items-center justify-between text-xs font-typewriter text-noir-inkMuted">
           {/* Author avatar & name */}
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-[2px] bg-noir-paperDark border border-noir-borderDark flex items-center justify-center text-[10px] font-bold text-noir-blood overflow-hidden shrink-0">
+            <div className="w-6 h-6 rounded-[2px] bg-noir-card border border-noir-borderDark flex items-center justify-center text-[10px] font-bold text-noir-blood overflow-hidden shrink-0">
               {post.authorAvatarUrl ? (
                 <img src={post.authorAvatarUrl} alt={post.authorUsername} className="w-full h-full object-cover" />
               ) : (
@@ -380,7 +380,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, lang, isMyTab }) => {
               {post.viewCount}
             </span>
             <span className="flex items-center gap-1" title="Lượt thích">
-              <Heart className="w-3.5 h-3.5 text-noir-wax" />
+              <Heart className="w-3.5 h-3.5 text-noir-blood" />
               {post.likeCount}
             </span>
             <span className="flex items-center gap-1" title="Bình luận">

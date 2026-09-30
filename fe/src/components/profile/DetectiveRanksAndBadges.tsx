@@ -286,7 +286,7 @@ export const DetectiveRanksAndBadges: React.FC<DetectiveRanksAndBadgesProps> = (
               }`}
             >
               <span>{lang === 'VI' ? 'Huy Hiệu Danh Dự' : 'Medals of Honor'}</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-noir-blood text-white font-mono">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-noir-blood text-white font-mono">
                 {earnedBadgeCodes.length}/{COMMENDATION_BADGES.length}
               </span>
             </button>
@@ -377,7 +377,7 @@ export const DetectiveRanksAndBadges: React.FC<DetectiveRanksAndBadgesProps> = (
                     {r.minScore} XP
                   </span>
                   {isCurrent && (
-                    <span className="mt-1.5 px-1.5 py-0.2 rounded bg-amber-600 text-white font-typewriter text-[9px]">
+                    <span className="mt-1.5 px-1.5 py-0.5 rounded bg-amber-600 text-white font-typewriter text-[9px]">
                       {lang === 'VI' ? 'Hiện tại' : 'Active'}
                     </span>
                   )}
@@ -456,7 +456,7 @@ export const DetectiveRanksAndBadges: React.FC<DetectiveRanksAndBadgesProps> = (
                 <div>
                   <h4 className="font-serif font-bold text-sm text-noir-ink flex items-center gap-2">
                     <span>{lang === 'VI' ? selectedBadge.titleVi : selectedBadge.titleEn}</span>
-                    <span className="text-[10px] font-typewriter px-1.5 py-0.2 rounded bg-noir-ink/10 text-noir-ink">
+                    <span className="text-[10px] font-typewriter px-1.5 py-0.5 rounded bg-noir-ink/10 text-noir-ink">
                       {selectedBadge.category.toUpperCase()}
                     </span>
                   </h4>

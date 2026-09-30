@@ -74,11 +74,11 @@ export const LeaderboardPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-300/80 text-xs font-typewriter">
                   <div>
                     <span className="text-slate-500 text-[10px] block font-bold">{lang === 'VI' ? 'TỔNG ĐIỂM' : 'TOTAL SCORE'}</span>
-                    <span className="font-bold text-noir-amber text-sm">{top3[1].totalScore.toLocaleString()} ⭐</span>
+                    <span className="font-bold text-noir-candleDark text-sm">{top3[1].totalScore.toLocaleString()} ⭐</span>
                   </div>
                   <div className="text-right">
                     <span className="text-slate-500 text-[10px] block font-bold">{lang === 'VI' ? 'ÁN ĐÃ PHÁ' : 'CASES SOLVED'}</span>
-                    <span className="font-bold text-noir-stampGreen text-sm">
+                    <span className="font-bold text-noir-stamp text-sm">
                       {top3[1].casesCompleted} {lang === 'VI' ? 'vụ án' : 'solved'}
                     </span>
                   </div>
@@ -119,11 +119,11 @@ export const LeaderboardPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 pt-3 border-t-2 border-amber-600/30 text-xs font-typewriter">
                   <div>
                     <span className="text-amber-800 text-[10px] block font-bold">{lang === 'VI' ? 'TỔNG ĐIỂM' : 'TOTAL SCORE'}</span>
-                    <span className="font-black text-noir-amber text-base">{top3[0].totalScore.toLocaleString()} ⭐</span>
+                    <span className="font-black text-noir-candleDark text-base">{top3[0].totalScore.toLocaleString()} ⭐</span>
                   </div>
                   <div className="text-right">
                     <span className="text-amber-800 text-[10px] block font-bold">{lang === 'VI' ? 'ÁN ĐÃ PHÁ' : 'CASES SOLVED'}</span>
-                    <span className="font-black text-noir-stampGreen text-base">
+                    <span className="font-black text-noir-stamp text-base">
                       {top3[0].casesCompleted} {lang === 'VI' ? 'vụ án' : 'files'}
                     </span>
                   </div>
@@ -163,11 +163,11 @@ export const LeaderboardPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2 pt-3 border-t border-amber-800/20 text-xs font-typewriter">
                   <div>
                     <span className="text-amber-900/70 text-[10px] block font-bold">{lang === 'VI' ? 'TỔNG ĐIỂM' : 'TOTAL SCORE'}</span>
-                    <span className="font-bold text-noir-amber text-sm">{top3[2].totalScore.toLocaleString()} ⭐</span>
+                    <span className="font-bold text-noir-candleDark text-sm">{top3[2].totalScore.toLocaleString()} ⭐</span>
                   </div>
                   <div className="text-right">
                     <span className="text-amber-900/70 text-[10px] block font-bold">{lang === 'VI' ? 'ÁN ĐÃ PHÁ' : 'CASES SOLVED'}</span>
-                    <span className="font-bold text-noir-stampGreen text-sm">
+                    <span className="font-bold text-noir-stamp text-sm">
                       {top3[2].casesCompleted} {lang === 'VI' ? 'vụ án' : 'solved'}
                     </span>
                   </div>
@@ -179,7 +179,7 @@ export const LeaderboardPage: React.FC = () => {
 
         {/* Leaderboard Dossier Table - Starting from Rank 4 */}
         <div className="bg-noir-paper border-2 border-noir-borderDark rounded-lg overflow-hidden shadow-noir-md">
-          <div className="bg-noir-paperDark/70 px-5 py-3 border-b-2 border-noir-borderDark flex items-center justify-between text-xs font-typewriter text-noir-muted uppercase tracking-wider">
+          <div className="bg-noir-card/70 px-5 py-3 border-b-2 border-noir-borderDark flex items-center justify-between text-xs font-typewriter text-noir-inkMuted uppercase tracking-wider">
             <span>{lang === 'VI' ? 'SỔ TAY QUÂN SỐ HIỆN TRƯỜNG • TỪ HẠNG 4 ĐẾN HẠNG 10' : 'FIELD PERSONNEL LEDGER • RANKS 4 TO 10'}</span>
             <span>{lang === 'VI' ? 'LƯU TRỮ CHÍNH THỨC' : 'OFFICIAL ARCHIVES'}</span>
           </div>
@@ -214,7 +214,7 @@ export const LeaderboardPage: React.FC = () => {
                         )}
                       >
                         <td className="py-3.5 px-4 text-center">
-                          <span className="inline-flex items-center justify-center w-8 h-7 rounded bg-noir-paperDark/70 border border-noir-border text-noir-muted font-mono font-bold text-xs">
+                          <span className="inline-flex items-center justify-center w-8 h-7 rounded bg-noir-card/70 border border-noir-border text-noir-inkMuted font-mono font-bold text-xs">
                             #{entry.rank}
                           </span>
                         </td>
@@ -230,23 +230,23 @@ export const LeaderboardPage: React.FC = () => {
                                   {entry.username}
                                 </span>
                                 {isCurrentUser && (
-                                  <span className="text-[10px] font-typewriter uppercase tracking-wider bg-noir-wax text-noir-paper px-2 py-0.5 rounded font-bold">
+                                  <span className="text-[10px] font-typewriter uppercase tracking-wider bg-noir-blood text-noir-paper px-2 py-0.5 rounded font-bold">
                                     {lang === 'VI' ? 'BẠN' : 'YOU'}
                                   </span>
                                 )}
                               </div>
-                              <span className="text-[11px] font-typewriter text-noir-muted">
+                              <span className="text-[11px] font-typewriter text-noir-inkMuted">
                                 {lang === 'VI' ? `Đặc vụ #${entry.rank}` : `Agent #${entry.rank}`}
                               </span>
                             </div>
                           </div>
                         </td>
 
-                        <td className="py-3.5 px-6 text-right text-base font-bold font-typewriter text-noir-amber">
+                        <td className="py-3.5 px-6 text-right text-base font-bold font-typewriter text-noir-candleDark">
                           {entry.totalScore.toLocaleString()}
                         </td>
 
-                        <td className="py-3.5 px-6 text-center text-noir-stampGreen font-typewriter font-bold">
+                        <td className="py-3.5 px-6 text-center text-noir-stamp font-typewriter font-bold">
                           {entry.casesCompleted} {lang === 'VI' ? 'vụ án' : 'solved'}
                         </td>
                       </tr>
@@ -257,7 +257,7 @@ export const LeaderboardPage: React.FC = () => {
             </div>
           ) : (
             <div className="py-12 px-4 text-center">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-noir-paperDark border border-noir-borderDark text-noir-muted mb-3">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-noir-card border border-noir-borderDark text-noir-inkMuted mb-3">
                 <Trophy className="w-5 h-5 text-noir-candleDark" />
               </div>
               <p className="text-sm font-sans font-semibold text-noir-ink">
@@ -265,7 +265,7 @@ export const LeaderboardPage: React.FC = () => {
                   ? 'Các điều tra viên xuất sắc nhất đang được vinh danh trên Bục Vinh Danh phía trên.'
                   : 'Top investigators are recognized on the Honor Podium above.'}
               </p>
-              <p className="text-xs font-typewriter text-noir-muted mt-1">
+              <p className="text-xs font-typewriter text-noir-inkMuted mt-1">
                 {lang === 'VI'
                   ? 'Từ hạng 4 đến hạng 10 sẽ được ghi nhận tại đây khi có thêm điều tra viên tham gia.'
                   : 'Ranks #4 to #10 will be registered here as additional investigators join the roster.'}

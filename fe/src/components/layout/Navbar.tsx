@@ -67,11 +67,11 @@ export const Navbar: React.FC = () => {
               <span>{lang === 'VI' ? 'Vụ Án' : 'Cases'}</span>
             </NavLink>
             <NavLink to="/posts" className={navLinkClasses}>
-              <Newspaper className="w-4 h-4 text-noir-amberDark" />
+              <Newspaper className="w-4 h-4 text-noir-candleDark" />
               <span>{lang === 'VI' ? 'Bản Tin' : 'Dispatches'}</span>
             </NavLink>
             <NavLink to="/wiki" className={navLinkClasses}>
-              <BookOpen className="w-4 h-4 text-noir-wax" />
+              <BookOpen className="w-4 h-4 text-noir-blood" />
               <span>{lang === 'VI' ? 'Cẩm Nang' : 'Handbook'}</span>
             </NavLink>
             <NavLink to="/leaderboard" className={navLinkClasses}>
@@ -214,7 +214,7 @@ export const Navbar: React.FC = () => {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 rounded text-xs font-typewriter text-noir-ink hover:bg-noir-card"
                   >
-                    <Newspaper className="w-4 h-4 text-noir-amberDark" />
+                    <Newspaper className="w-4 h-4 text-noir-candleDark" />
                     <span>{lang === 'VI' ? 'Bản Tin Điều Tra' : 'Detective Dispatches'}</span>
                   </Link>
                   <Link
@@ -222,7 +222,7 @@ export const Navbar: React.FC = () => {
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 rounded text-xs font-typewriter text-noir-ink hover:bg-noir-card"
                   >
-                    <BookOpen className="w-4 h-4 text-noir-wax" />
+                    <BookOpen className="w-4 h-4 text-noir-blood" />
                     <span>{lang === 'VI' ? 'Cẩm Nang' : 'Handbook'}</span>
                   </Link>
                   <Link
@@ -281,7 +281,7 @@ export const Navbar: React.FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 px-3 py-2 rounded text-xs font-typewriter text-noir-ink hover:bg-noir-card"
                 >
-                  <BookOpen className="w-4 h-4 text-noir-wax" />
+                  <BookOpen className="w-4 h-4 text-noir-blood" />
                   <span>{lang === 'VI' ? 'Cẩm Nang' : 'Handbook'}</span>
                 </Link>
                 <Link

@@ -85,7 +85,7 @@ export const AdminPostModerationPage: React.FC = () => {
           {/* Header */}
           <div className="bg-noir-card border-2 border-noir-borderDark rounded-md p-6 shadow-noir-md relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-noir-blood" />
-            <div className="flex items-center gap-2 text-xs font-typewriter font-bold text-noir-wax tracking-widest uppercase mb-1">
+            <div className="flex items-center gap-2 text-xs font-typewriter font-bold text-noir-blood tracking-widest uppercase mb-1">
               <ShieldCheck className="w-4 h-4" />
               <span>BAN THANH TRA HỌC VIỆN / CLEARANCE BUREAU</span>
             </div>

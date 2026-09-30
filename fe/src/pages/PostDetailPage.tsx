@@ -150,7 +150,7 @@ export const PostDetailPage: React.FC = () => {
     return (
       <PageWrapper>
         <div className="py-24 flex flex-col items-center justify-center text-noir-inkMuted">
-          <div className="w-10 h-10 rounded-full border-3 border-noir-borderDark border-t-noir-blood animate-spin mb-3" />
+          <div className="w-10 h-10 rounded-full border-[3px] border-noir-borderDark border-t-noir-blood animate-spin mb-3" />
           <span className="font-typewriter text-xs uppercase tracking-widest font-bold">
             {lang === 'VI' ? 'ĐANG GIẢI MÃ TẬP HỒ SƠ...' : 'DECRYPTING CLASSIFIED INTEL...'}
           </span>
@@ -244,7 +244,7 @@ export const PostDetailPage: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-noir-borderDark/60 text-xs font-typewriter text-noir-inkMuted">
               {/* Author badge */}
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-md bg-noir-paperDark border-2 border-noir-borderDark flex items-center justify-center text-sm font-bold text-noir-blood overflow-hidden shrink-0 shadow-sm">
+                <div className="w-9 h-9 rounded-md bg-noir-card border-2 border-noir-borderDark flex items-center justify-center text-sm font-bold text-noir-blood overflow-hidden shrink-0 shadow-sm">
                   {post.authorAvatarUrl ? (
                     <img src={post.authorAvatarUrl} alt={post.authorUsername} className="w-full h-full object-cover" />
                   ) : (
@@ -283,12 +283,12 @@ export const PostDetailPage: React.FC = () => {
             {/* Tags list */}
             {post.tags && post.tags.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap pt-2">
-                <TagIcon className="w-3.5 h-3.5 text-noir-wax" />
+                <TagIcon className="w-3.5 h-3.5 text-noir-blood" />
                 {post.tags.map((tag, idx) => (
                   <Link
                     key={idx}
                     to={`/posts?tag=${encodeURIComponent(tag)}`}
-                    className="text-xs font-typewriter text-noir-blood hover:text-noir-bloodDark bg-noir-paperDark/70 hover:bg-noir-paperDark px-2.5 py-0.5 rounded border border-noir-borderDark/50 transition-colors"
+                    className="text-xs font-typewriter text-noir-blood hover:text-noir-bloodDark bg-noir-card/70 hover:bg-noir-cardHover px-2.5 py-0.5 rounded border border-noir-borderDark/50 transition-colors"
                   >
                     #{tag}
                   </Link>
@@ -306,8 +306,8 @@ export const PostDetailPage: React.FC = () => {
                 disabled={likeMutation.isPending}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-typewriter font-bold transition-all ${
                   post.isLiked
-                    ? 'bg-noir-wax text-white border-noir-waxDark shadow-sm'
-                    : 'bg-noir-card text-noir-ink border-noir-borderDark hover:bg-noir-paperDark'
+                    ? 'bg-noir-blood text-white border-noir-bloodDark shadow-sm'
+                    : 'bg-noir-card text-noir-ink border-noir-borderDark hover:bg-noir-cardHover'
                 }`}
                 title="Thích bài viết"
               >
@@ -322,7 +322,7 @@ export const PostDetailPage: React.FC = () => {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border text-xs font-typewriter font-bold transition-all ${
                   post.isBookmarked
                     ? 'bg-noir-blood text-white border-noir-bloodDark shadow-sm'
-                    : 'bg-noir-card text-noir-ink border-noir-borderDark hover:bg-noir-paperDark'
+                    : 'bg-noir-card text-noir-ink border-noir-borderDark hover:bg-noir-cardHover'
                 }`}
                 title="Lưu vào sổ tay điều tra"
               >
@@ -334,7 +334,7 @@ export const PostDetailPage: React.FC = () => {
             {/* Share link button */}
             <button
               onClick={handleCopyLink}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-noir-borderDark bg-noir-card hover:bg-noir-paperDark text-xs font-typewriter text-noir-ink font-bold transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-noir-borderDark bg-noir-card hover:bg-noir-cardHover text-xs font-typewriter text-noir-ink font-bold transition-all"
               title="Sao chép liên kết"
             >
               {copiedLink ? <Check className="w-4 h-4 text-green-700" /> : <Share2 className="w-4 h-4" />}
@@ -366,7 +366,7 @@ export const PostDetailPage: React.FC = () => {
             {isAuthenticated ? (
               <form onSubmit={handleCommentSubmit} className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-[2px] bg-noir-paperDark border border-noir-borderDark flex items-center justify-center text-xs font-bold text-noir-blood shrink-0 overflow-hidden">
+                  <div className="w-8 h-8 rounded-[2px] bg-noir-card border border-noir-borderDark flex items-center justify-center text-xs font-bold text-noir-blood shrink-0 overflow-hidden">
                     {user?.avatarUrl ? (
                       <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
                     ) : (
@@ -397,7 +397,7 @@ export const PostDetailPage: React.FC = () => {
                 </div>
               </form>
             ) : (
-              <div className="p-4 bg-noir-paperDark/50 border border-noir-borderDark rounded text-center text-xs font-typewriter text-noir-inkMuted">
+              <div className="p-4 bg-noir-card/50 border border-noir-borderDark rounded text-center text-xs font-typewriter text-noir-inkMuted">
                 <Link to="/login" className="text-noir-blood font-bold underline">
                   {lang === 'VI' ? 'Đăng nhập' : 'Sign in'}
                 </Link>{' '}
@@ -425,7 +425,7 @@ export const PostDetailPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-[2px] bg-noir-paperDark border border-noir-borderDark flex items-center justify-center text-[10px] font-bold text-noir-blood overflow-hidden shrink-0">
+                          <div className="w-6 h-6 rounded-[2px] bg-noir-card border border-noir-borderDark flex items-center justify-center text-[10px] font-bold text-noir-blood overflow-hidden shrink-0">
                             {comment.userAvatarUrl ? (
                               <img src={comment.userAvatarUrl} alt={comment.username} className="w-full h-full object-cover" />
                             ) : (

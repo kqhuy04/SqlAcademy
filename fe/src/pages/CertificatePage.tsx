@@ -114,7 +114,7 @@ export const CertificatePage: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={handlePrint}
-              leftIcon={<Printer className="w-4 h-4 text-noir-muted" />}
+              leftIcon={<Printer className="w-4 h-4 text-noir-inkMuted" />}
               className="text-xs font-typewriter uppercase tracking-wider"
             >
               {lang === 'VI' ? 'In Giấy Chứng Nhận' : 'Print Certificate'}

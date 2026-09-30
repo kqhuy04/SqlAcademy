@@ -271,7 +271,7 @@ export const TutorialListPage: React.FC = () => {
                                 {lang === 'VI' ? lesson.titleVi : lesson.titleEn}
                               </span>
                               {lesson.isOptimizationLesson && (
-                                <span className="text-[9px] font-mono text-amber-800 bg-amber-950/20 px-1.5 py-0.2 rounded border border-amber-700/30 flex-shrink-0">
+                                <span className="text-[9px] font-mono text-amber-800 bg-amber-950/20 px-1.5 py-0.5 rounded border border-amber-700/30 flex-shrink-0">
                                   {lang === 'VI' ? 'Tối ưu hóa' : 'Optimization'}
                                 </span>
                               )}

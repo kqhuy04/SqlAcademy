@@ -159,7 +159,7 @@ export const ProfilePage: React.FC = () => {
         {/* Investigator ID Card Header */}
         <div className="bg-noir-paper border-2 border-noir-borderDark rounded-lg p-6 sm:p-8 mb-8 relative overflow-hidden shadow-noir-md">
           {/* Top Tape Docket Strip */}
-          <div className="absolute top-0 left-0 right-0 bg-noir-paperDark px-4 py-1 border-b border-noir-borderDark flex items-center justify-between text-[10px] font-typewriter uppercase tracking-widest text-noir-muted">
+          <div className="absolute top-0 left-0 right-0 bg-noir-card px-4 py-1 border-b border-noir-borderDark flex items-center justify-between text-[10px] font-typewriter uppercase tracking-widest text-noir-inkMuted">
             <span>
               {lang === 'VI'
                 ? 'HỒ SƠ ĐẶC VỤ'
@@ -184,7 +184,7 @@ export const ProfilePage: React.FC = () => {
 
                 <div
                   onClick={() => !isUploadingAvatar && fileInputRef.current?.click()}
-                  className="w-24 h-24 rounded-md bg-noir-paperDark border-2 border-noir-borderDark relative overflow-hidden flex items-center justify-center shadow-md cursor-pointer transition-transform group-hover:scale-105"
+                  className="w-24 h-24 rounded-md bg-noir-card border-2 border-noir-borderDark relative overflow-hidden flex items-center justify-center shadow-md cursor-pointer transition-transform group-hover:scale-105"
                   title={lang === 'VI' ? 'Nhấp để thay đổi ảnh hồ sơ' : 'Click to update dossier photo'}
                 >
                   {user?.avatarUrl ? (
@@ -242,7 +242,7 @@ export const ProfilePage: React.FC = () => {
                   )}
                 </div>
                 <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-typewriter text-noir-stampGreen font-bold flex items-center gap-1 bg-noir-stampGreen/10 px-2.5 py-1 rounded border border-noir-stampGreen/20">
+                  <span className="text-xs font-typewriter text-noir-stamp font-bold flex items-center gap-1 bg-noir-stamp/10 px-2.5 py-1 rounded border border-noir-stamp/20">
                     <UserCheck className="w-3.5 h-3.5" /> {lang === 'VI' ? 'ĐANG LÀM NHIỆM VỤ' : 'ACTIVE ON DUTY'}
                   </span>
                 </div>
@@ -265,8 +265,8 @@ export const ProfilePage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setShowSubscribeModal(true)}
-                  leftIcon={<Award className="w-4 h-4 shrink-0 text-noir-amber" />}
-                  className="w-full justify-start text-xs font-typewriter py-2 px-3 bg-noir-paperDark/40 hover:bg-noir-paperDark border-noir-borderDark text-noir-ink"
+                  leftIcon={<Award className="w-4 h-4 shrink-0 text-noir-candleDark" />}
+                  className="w-full justify-start text-xs font-typewriter py-2 px-3 bg-noir-card/40 hover:bg-noir-cardHover border-noir-borderDark text-noir-ink"
                 >
                   <span>{lang === 'VI' ? 'Nâng Cấp Quyền Hạn' : 'Upgrade Clearance'}</span>
                 </Button>
@@ -275,8 +275,8 @@ export const ProfilePage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowChangePasswordModal(true)}
-                leftIcon={<KeyRound className="w-4 h-4 shrink-0 text-noir-muted" />}
-                className="w-full justify-start text-xs font-typewriter py-2 px-3 bg-noir-paperDark/40 hover:bg-noir-paperDark border-noir-borderDark text-noir-ink"
+                leftIcon={<KeyRound className="w-4 h-4 shrink-0 text-noir-inkMuted" />}
+                className="w-full justify-start text-xs font-typewriter py-2 px-3 bg-noir-card/40 hover:bg-noir-cardHover border-noir-borderDark text-noir-ink"
               >
                 <span>{lang === 'VI' ? 'Đổi Mật Khẩu' : 'Change Passphrase'}</span>
               </Button>
@@ -284,8 +284,8 @@ export const ProfilePage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowSettingsModal(true)}
-                leftIcon={<Languages className="w-4 h-4 shrink-0 text-noir-muted" />}
-                className="w-full justify-start text-xs font-typewriter py-2 px-3 bg-noir-paperDark/40 hover:bg-noir-paperDark border-noir-borderDark text-noir-ink"
+                leftIcon={<Languages className="w-4 h-4 shrink-0 text-noir-inkMuted" />}
+                className="w-full justify-start text-xs font-typewriter py-2 px-3 bg-noir-card/40 hover:bg-noir-cardHover border-noir-borderDark text-noir-ink"
               >
                 <span>{lang === 'VI' ? 'Cài Đặt Ngôn Ngữ' : 'Language Settings'}</span>
               </Button>
@@ -294,9 +294,9 @@ export const ProfilePage: React.FC = () => {
 
           {/* Stats Grid: Badge ID + Score + Cases Solved */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t-2 border-noir-borderDark/60">
-            <div className="bg-noir-paperDark/50 border border-noir-borderDark rounded-md p-4 font-typewriter">
-              <div className="text-xs text-noir-muted flex items-center gap-1.5 font-bold uppercase tracking-wider">
-                <Hash className="w-4 h-4 text-noir-wax" />
+            <div className="bg-noir-card/50 border border-noir-borderDark rounded-md p-4 font-typewriter">
+              <div className="text-xs text-noir-inkMuted flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                <Hash className="w-4 h-4 text-noir-blood" />
                 <span>{lang === 'VI' ? 'MÃ THẺ' : 'BADGE ID'}</span>
               </div>
               <div className="text-2xl sm:text-3xl font-black text-noir-ink mt-1.5">
@@ -304,8 +304,8 @@ export const ProfilePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-noir-paperDark/50 border border-noir-borderDark rounded-md p-4 font-typewriter">
-              <div className="text-xs text-noir-muted flex items-center gap-1.5 font-bold uppercase tracking-wider">
+            <div className="bg-noir-card/50 border border-noir-borderDark rounded-md p-4 font-typewriter">
+              <div className="text-xs text-noir-inkMuted flex items-center gap-1.5 font-bold uppercase tracking-wider">
                 <Star className="w-4 h-4 text-noir-candleDark" />
                 <span>{lang === 'VI' ? 'ĐIỂM' : 'SCORE'}</span>
               </div>
@@ -314,12 +314,12 @@ export const ProfilePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-noir-paperDark/50 border border-noir-borderDark rounded-md p-4 font-typewriter">
-              <div className="text-xs text-noir-muted flex items-center gap-1.5 font-bold uppercase tracking-wider">
-                <CheckCircle2 className="w-4 h-4 text-noir-stampGreen" />
+            <div className="bg-noir-card/50 border border-noir-borderDark rounded-md p-4 font-typewriter">
+              <div className="text-xs text-noir-inkMuted flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                <CheckCircle2 className="w-4 h-4 text-noir-stamp" />
                 <span>{lang === 'VI' ? 'PHÁ ÁN' : 'SOLVED'}</span>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-noir-stampGreen mt-1.5">
+              <div className="text-2xl sm:text-3xl font-black text-noir-stamp mt-1.5">
                 {casesCompletedCount}
               </div>
             </div>
@@ -338,16 +338,16 @@ export const ProfilePage: React.FC = () => {
 
         {/* Case Progress History Table */}
         <div className="bg-noir-paper border-2 border-noir-borderDark rounded-lg overflow-hidden shadow-noir-md">
-          <div className="bg-noir-paperDark/70 px-5 py-3 border-b-2 border-noir-borderDark flex items-center justify-between text-xs font-typewriter text-noir-ink font-bold uppercase tracking-wider">
+          <div className="bg-noir-card/70 px-5 py-3 border-b-2 border-noir-borderDark flex items-center justify-between text-xs font-typewriter text-noir-ink font-bold uppercase tracking-wider">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-noir-wax" />
+              <FileText className="w-4 h-4 text-noir-blood" />
               <span>
                 {lang === 'VI'
                   ? 'NHẬT KÝ ĐIỀU TRA • SỔ TAY KẾT QUẢ PHÁ ÁN'
                   : 'CASE INVESTIGATION LOG • FORENSIC RESOLUTION LEDGER'}
               </span>
             </div>
-            <span className="text-noir-muted font-normal text-[11px]">
+            <span className="text-noir-inkMuted font-normal text-[11px]">
               {lang === 'VI' ? 'LƯU TRỮ GIÁM ĐỊNH' : 'FORENSIC ARCHIVES'}
             </span>
           </div>
@@ -356,7 +356,7 @@ export const ProfilePage: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse font-typewriter">
                 <thead>
-                  <tr className="bg-noir-paperDark/30 border-b border-noir-borderDark text-noir-muted uppercase text-[11px]">
+                  <tr className="bg-noir-card/30 border-b border-noir-borderDark text-noir-inkMuted uppercase text-[11px]">
                     <th className="py-3 px-4">{lang === 'VI' ? 'Hồ Sơ Vụ Án' : 'Case File'}</th>
                     <th className="py-3 px-4">{lang === 'VI' ? 'Cấp Độ' : 'Class'}</th>
                     <th className="py-3 px-4">{lang === 'VI' ? 'Đầu Mối' : 'Lead'}</th>
@@ -368,17 +368,17 @@ export const ProfilePage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-noir-border/50">
                   {progressList.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-noir-paperDark/40 transition-colors text-noir-ink">
+                    <tr key={idx} className="hover:bg-noir-card/40 transition-colors text-noir-ink">
                       <td className="py-3 px-4 font-serif font-bold text-sm text-noir-ink">
                         {item.caseTitle}
                       </td>
                       <td className="py-3 px-4">
                         <DifficultyBadge difficulty={item.difficulty} />
                       </td>
-                      <td className="py-3 px-4 font-typewriter text-noir-muted">
+                      <td className="py-3 px-4 font-typewriter text-noir-inkMuted">
                         {lang === 'VI' ? `Đầu mối #${item.questionOrderIndex}` : `Lead #${item.questionOrderIndex}`}
                       </td>
-                      <td className="py-3 px-4 text-noir-amber font-bold text-sm font-typewriter">
+                      <td className="py-3 px-4 text-noir-candleDark font-bold text-sm font-typewriter">
                         +{item.scoreEarned} ⭐
                       </td>
                       <td className="py-3 px-4 text-noir-ink font-typewriter">
@@ -387,7 +387,7 @@ export const ProfilePage: React.FC = () => {
                       <td className="py-3 px-4 text-noir-ink font-typewriter">
                         {item.attempts} {lang === 'VI' ? 'lần thử' : 'trials'}
                       </td>
-                      <td className="py-3 px-4 text-noir-muted text-[11px] font-typewriter">
+                      <td className="py-3 px-4 text-noir-inkMuted text-[11px] font-typewriter">
                         {item.completedAt ? new Date(item.completedAt).toLocaleString(lang === 'VI' ? 'vi-VN' : 'en-US') : '—'}
                       </td>
                     </tr>
@@ -396,7 +396,7 @@ export const ProfilePage: React.FC = () => {
               </table>
             </div>
           ) : (
-            <div className="py-10 text-center text-noir-muted font-typewriter text-xs">
+            <div className="py-10 text-center text-noir-inkMuted font-typewriter text-xs">
               <span>
                 {lang === 'VI'
                   ? 'Chưa có câu hỏi điều tra nào được ghi nhận trong sổ tay quân số.'

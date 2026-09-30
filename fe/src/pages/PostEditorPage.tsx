@@ -229,7 +229,7 @@ export const PostEditorPage: React.FC = () => {
             {/* Top Red Stripe */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-noir-blood" />
 
-            <div className="flex items-center gap-2 text-xs font-typewriter font-bold text-noir-wax tracking-widest uppercase">
+            <div className="flex items-center gap-2 text-xs font-typewriter font-bold text-noir-blood tracking-widest uppercase">
               <FileEdit className="w-4 h-4" />
               <span>
                 {isEditing
@@ -256,7 +256,7 @@ export const PostEditorPage: React.FC = () => {
             {/* Thumbnail URL Input */}
             <div>
               <label className="block text-xs font-typewriter font-bold text-noir-ink uppercase mb-1.5 flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-noir-wax" />
+                <ImageIcon className="w-3.5 h-3.5 text-noir-blood" />
                 <span>{lang === 'VI' ? 'Đường dẫn ảnh bìa (Tùy chọn)' : 'Cover Image URL (Optional)'}</span>
               </label>
               <input
@@ -267,7 +267,7 @@ export const PostEditorPage: React.FC = () => {
                 className="w-full p-2.5 rounded-md bg-noir-paper border-2 border-noir-borderDark text-noir-ink font-mono text-xs focus:outline-none focus:border-noir-blood transition-colors"
               />
               {thumbnailUrl && (
-                <div className="mt-2 w-40 h-24 rounded border border-noir-borderDark overflow-hidden bg-noir-paperDark">
+                <div className="mt-2 w-40 h-24 rounded border border-noir-borderDark overflow-hidden bg-noir-card">
                   <img src={thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
                 </div>
               )}
@@ -276,7 +276,7 @@ export const PostEditorPage: React.FC = () => {
             {/* Tags Input */}
             <div>
               <label className="block text-xs font-typewriter font-bold text-noir-ink uppercase mb-1.5 flex items-center gap-1.5">
-                <TagIcon className="w-3.5 h-3.5 text-noir-wax" />
+                <TagIcon className="w-3.5 h-3.5 text-noir-blood" />
                 <span>{lang === 'VI' ? 'Chủ đề / Tags (Tối đa 5)' : 'Tags (Max 5)'}</span>
               </label>
               <div className="flex items-center gap-2 flex-wrap p-2.5 rounded-md bg-noir-paper border-2 border-noir-borderDark">

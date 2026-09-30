@@ -23,7 +23,7 @@ const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ de
 
 const PageLoader = () => (
   <div className="min-h-screen flex flex-col items-center justify-center bg-noir-parchment p-8 select-none">
-    <div className="w-10 h-10 rounded-full border-3 border-noir-border border-t-noir-blood animate-spin mb-3 shadow-sm" />
+    <div className="w-10 h-10 rounded-full border-[3px] border-noir-border border-t-noir-blood animate-spin mb-3 shadow-sm" />
     <span className="font-typewriter text-xs text-noir-inkMuted tracking-widest uppercase font-bold">
       DECIPHERING CONFIDENTIAL DOSSIER...
     </span>

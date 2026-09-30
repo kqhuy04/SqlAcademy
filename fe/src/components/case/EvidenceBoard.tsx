@@ -197,7 +197,7 @@ export const EvidenceBoard: React.FC<EvidenceBoardProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={lang === 'VI' ? 'Tìm bảng, cột chứng cứ...' : 'Filter dossiers or columns...'}
-              className="pl-8 pr-3 py-1 text-xs bg-[#F5ECD7] border border-[#C4B6A0] rounded text-noir-ink placeholder:italic placeholder:text-noir-inkFaint focus:outline-none focus:border-noir-wax w-48 font-mono shadow-sm"
+              className="pl-8 pr-3 py-1 text-xs bg-[#F5ECD7] border border-[#C4B6A0] rounded text-noir-ink placeholder:italic placeholder:text-noir-inkFaint focus:outline-none focus:border-noir-blood w-48 font-mono shadow-sm"
             />
           </div>
         </div>
@@ -296,7 +296,7 @@ export const EvidenceBoard: React.FC<EvidenceBoardProps> = ({
                       <span className="font-mono font-bold text-sm text-noir-ink truncate tracking-tight">
                         {table.tableName}
                       </span>
-                      <span className={`text-[9px] px-1.5 py-0.2 rounded font-typewriter border ${theme.badgeColor}`}>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-typewriter border ${theme.badgeColor}`}>
                         {theme.tag}
                       </span>
                     </div>

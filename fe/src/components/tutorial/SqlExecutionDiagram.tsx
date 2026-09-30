@@ -193,7 +193,7 @@ export const SqlExecutionDiagram: React.FC<SqlExecutionDiagramProps> = ({
                       </span>
                     </div>
                     {step.highlight && (
-                      <span className="text-[9px] font-typewriter uppercase bg-noir-candle/20 text-noir-candleDark px-1.5 py-0.2 rounded border border-noir-candleDark font-bold">
+                      <span className="text-[9px] font-typewriter uppercase bg-noir-candle/20 text-noir-candleDark px-1.5 py-0.5 rounded border border-noir-candleDark font-bold">
                         {lang === 'VI' ? 'Bài này' : 'Active'}
                       </span>
                     )}

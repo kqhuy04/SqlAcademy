@@ -28,12 +28,12 @@ export const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
             </h3>
           ),
           p: ({ children }) => (
-            <p className="my-4 leading-7 text-noir-ink selection:bg-noir-wax/20">
+            <p className="my-4 leading-7 text-noir-ink selection:bg-noir-blood/20">
               {children}
             </p>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="my-5 pl-4 py-2 border-l-4 border-noir-wax bg-noir-card/40 rounded-r-md text-noir-inkMuted italic font-typewriter text-sm">
+            <blockquote className="my-5 pl-4 py-2 border-l-4 border-noir-blood bg-noir-card/40 rounded-r-md text-noir-inkMuted italic font-typewriter text-sm">
               {children}
             </blockquote>
           ),
@@ -62,7 +62,7 @@ export const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
             <div className="my-6 rounded-md overflow-hidden border-2 border-noir-borderDark shadow-md bg-noir-card">
               <img src={src} alt={alt} className="w-full max-h-[500px] object-cover" />
               {alt && (
-                <div className="p-2 text-center text-xs font-typewriter text-noir-inkMuted bg-noir-paperDark/60 border-t border-noir-borderDark/40">
+                <div className="p-2 text-center text-xs font-typewriter text-noir-inkMuted bg-noir-card/60 border-t border-noir-borderDark/40">
                   {alt}
                 </div>
               )}
@@ -125,7 +125,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ code, language }) => {
           <span>{copied ? 'Copied' : 'Copy'}</span>
         </button>
       </div>
-      <pre className="p-4 font-mono text-xs sm:text-sm overflow-x-auto leading-relaxed selection:bg-noir-wax/40">
+      <pre className="p-4 font-mono text-xs sm:text-sm overflow-x-auto leading-relaxed selection:bg-noir-blood/40">
         <code>{code}</code>
       </pre>
     </div>

@@ -142,7 +142,7 @@ export const TableSchemaViewer: React.FC<TableSchemaViewerProps> = ({
                       <span className="font-mono font-bold text-sm text-noir-ink group-hover:text-noir-blood transition-colors">
                         {table.tableName}
                       </span>
-                      <span className="text-[10px] font-typewriter text-noir-inkMuted bg-noir-paper px-1.5 py-0.2 rounded border border-noir-borderDark/60">
+                      <span className="text-[10px] font-typewriter text-noir-inkMuted bg-noir-paper px-1.5 py-0.5 rounded border border-noir-borderDark/60">
                         {table.columnDTOList?.length || 0} {lang === 'VI' ? 'cột' : 'cols'}
                       </span>
                     </div>
@@ -235,7 +235,7 @@ export const TableSchemaViewer: React.FC<TableSchemaViewerProps> = ({
                                   </span>
                                   {col.isPrimaryKey && (
                                     <span
-                                      className="inline-flex items-center gap-0.5 bg-noir-candle/20 border border-noir-candleDark text-noir-candleDark px-1 py-0.2 rounded text-[9px] font-typewriter font-black tracking-tighter"
+                                      className="inline-flex items-center gap-0.5 bg-noir-candle/20 border border-noir-candleDark text-noir-candleDark px-1 py-0.5 rounded text-[9px] font-typewriter font-black tracking-tighter"
                                       title="Primary Key (Khóa chính)"
                                     >
                                       <Key className="w-2.5 h-2.5" /> PK

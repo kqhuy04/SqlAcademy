@@ -554,10 +554,10 @@ export const TutorialWorkspacePage: React.FC = () => {
                     : 'text-noir-ink hover:text-noir-blood hover:bg-noir-card/50 font-bold'
                 )}
               >
-                <Scale className="w-4 h-4 text-noir-wax" />
+                <Scale className="w-4 h-4 text-noir-blood" />
                 <span>{lang === 'VI' ? '3. Phá Án' : '3. Solve Case'}</span>
                 {completedChallengeIds.length > 0 && (
-                  <span className="ml-1 text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-700 text-white font-bold">
+                  <span className="ml-1 text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-700 text-white font-bold">
                     {completedChallengeIds.length}/4
                   </span>
                 )}

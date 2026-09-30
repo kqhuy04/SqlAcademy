@@ -386,7 +386,7 @@ export const CaseListPage: React.FC = () => {
             {/* Pagination Controls Docket */}
             {totalPages > 1 && (
               <div className="mt-8 pt-6 border-t-2 border-noir-borderDark/60 flex flex-col sm:flex-row items-center justify-between gap-4 font-typewriter">
-                <div className="text-xs text-noir-muted">
+                <div className="text-xs text-noir-inkMuted">
                   {lang === 'VI'
                     ? `Hiển thị ${(validCurrentPage - 1) * ITEMS_PER_PAGE + 1}–${Math.min(
                         validCurrentPage * ITEMS_PER_PAGE,

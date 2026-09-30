@@ -177,7 +177,7 @@ export const QueryHistoryPanel: React.FC<QueryHistoryPanelProps> = ({
                     </span>
 
                     {isSuccess ? (
-                      <span className="flex items-center gap-1 text-[10px] font-typewriter font-bold text-emerald-800 bg-emerald-950/10 px-1.5 py-0.2 rounded border border-emerald-800/30 uppercase">
+                      <span className="flex items-center gap-1 text-[10px] font-typewriter font-bold text-emerald-800 bg-emerald-950/10 px-1.5 py-0.5 rounded border border-emerald-800/30 uppercase">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>
                           {item.rowCount !== undefined
@@ -186,7 +186,7 @@ export const QueryHistoryPanel: React.FC<QueryHistoryPanelProps> = ({
                         </span>
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-[10px] font-typewriter font-bold text-noir-blood bg-noir-blood/10 px-1.5 py-0.2 rounded border border-noir-blood/30 uppercase">
+                      <span className="flex items-center gap-1 text-[10px] font-typewriter font-bold text-noir-blood bg-noir-blood/10 px-1.5 py-0.5 rounded border border-noir-blood/30 uppercase">
                         <AlertCircle className="w-3 h-3" />
                         <span>ERROR</span>
                       </span>
@@ -312,7 +312,7 @@ const SnapshotModal: React.FC<SnapshotModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-noir-ink/60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-noir-ink/60 backdrop-blur-sm">
       <div className="bg-noir-paper border-2 border-noir-borderDark rounded-[4px] shadow-noir-lift max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-fadeIn">
         {/* Modal Header */}
         <div className="bg-noir-card px-4 py-3 border-b-2 border-noir-borderDark flex items-center justify-between">
@@ -321,10 +321,10 @@ const SnapshotModal: React.FC<SnapshotModalProps> = ({
             <div>
               <div className="font-typewriter text-xs font-bold uppercase text-noir-ink flex items-center gap-2">
                 <span>{lang === 'VI' ? 'KẾT QUẢ TRUY VẤN CŨ' : 'QUERY RESULT SNAPSHOT'}</span>
-                <span className="font-mono text-[10px] text-noir-inkMuted bg-noir-paper px-1.5 py-0.2 rounded border border-noir-borderDark">
+                <span className="font-mono text-[10px] text-noir-inkMuted bg-noir-paper px-1.5 py-0.5 rounded border border-noir-borderDark">
                   {item.timestamp}
                 </span>
-                <span className="font-mono text-[10px] text-emerald-800 bg-emerald-950/10 px-1.5 py-0.2 rounded border border-emerald-800/30">
+                <span className="font-mono text-[10px] text-emerald-800 bg-emerald-950/10 px-1.5 py-0.5 rounded border border-emerald-800/30">
                   {rows.length} rows
                 </span>
               </div>

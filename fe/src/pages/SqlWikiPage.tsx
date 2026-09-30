@@ -95,7 +95,7 @@ export const SqlWikiPage: React.FC = () => {
                 : '“Query execution pipeline and alphabetical reference directory for forensic data detectives.”'}
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 self-start md:self-auto bg-noir-parchmentDark border border-noir-border px-3.5 py-1.5 rounded-lg text-xs font-typewriter text-noir-inkMuted shadow-sm">
+          <div className="inline-flex items-center gap-2 self-start md:self-auto bg-noir-card border border-noir-border px-3.5 py-1.5 rounded-lg text-xs font-typewriter text-noir-inkMuted shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
             <span>
               {lang === 'VI' ? `${SQL_WIKI_ENTRIES.length} Lệnh & Cú Pháp Chuẩn` : `${SQL_WIKI_ENTRIES.length} Standard SQL Clauses`}
@@ -194,7 +194,7 @@ export const SqlWikiPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
             {/* Search Input */}
             <div className="relative w-full sm:max-w-md">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-noir-muted" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-noir-inkMuted" />
               <input
                 type="text"
                 value={searchQuery}
@@ -204,12 +204,12 @@ export const SqlWikiPage: React.FC = () => {
                     ? 'Tìm kiếm lệnh (SELECT, WHERE, JOIN, GROUP BY...)'
                     : 'Search clause (SELECT, WHERE, JOIN, GROUP BY...)'
                 }
-                className="w-full pl-10 pr-10 py-2.5 bg-noir-paper border-2 border-noir-borderDark rounded-[3px] text-xs font-sans text-noir-ink placeholder:text-noir-muted focus:outline-none focus:border-noir-blood shadow-sm"
+                className="w-full pl-10 pr-10 py-2.5 bg-noir-paper border-2 border-noir-borderDark rounded-[3px] text-xs font-sans text-noir-ink placeholder:text-noir-inkMuted focus:outline-none focus:border-noir-blood shadow-sm"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-noir-muted hover:text-noir-ink p-1 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-noir-inkMuted hover:text-noir-ink p-1 cursor-pointer"
                 >
                   ✕
                 </button>
@@ -226,7 +226,7 @@ export const SqlWikiPage: React.FC = () => {
               {(selectedExecOrder !== null || searchQuery) && (
                 <button
                   onClick={resetAllFilters}
-                  className="px-3 py-1.5 bg-noir-paperDark hover:bg-noir-paper border border-noir-borderDark rounded-[3px] text-[11px] font-typewriter text-noir-blood font-bold uppercase tracking-wider flex items-center gap-1 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 bg-noir-card hover:bg-noir-paper border border-noir-borderDark rounded-[3px] text-[11px] font-typewriter text-noir-blood font-bold uppercase tracking-wider flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <Filter className="w-3 h-3" />
                   <span>{lang === 'VI' ? 'Đặt lại' : 'Reset'}</span>
@@ -295,7 +295,7 @@ export const SqlWikiPage: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={2} className="py-12 text-center text-noir-inkMuted">
-                      <Search className="w-8 h-8 mx-auto mb-2 text-noir-muted" />
+                      <Search className="w-8 h-8 mx-auto mb-2 text-noir-inkMuted" />
                       <p className="text-sm font-typewriter font-bold text-noir-ink">
                         {lang === 'VI' ? 'Không tìm thấy câu lệnh phù hợp' : 'No matching clauses found'}
                       </p>
@@ -364,7 +364,7 @@ export const SqlWikiPage: React.FC = () => {
               </div>
 
               {/* Detective Forensic Scenario */}
-              <div className="bg-amber-500/10 border-l-3 border-amber-600 p-3 rounded-r-[3px]">
+              <div className="bg-amber-500/10 border-l-[3px] border-amber-600 p-3 rounded-r-[3px]">
                 <div className="flex items-center gap-1.5 text-[11px] font-typewriter font-bold text-amber-900 mb-1 uppercase tracking-wide">
                   <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
                   <span>{lang === 'VI' ? 'Tình Huống Phá Án Thực Tế' : 'Forensic Investigation Case'}</span>

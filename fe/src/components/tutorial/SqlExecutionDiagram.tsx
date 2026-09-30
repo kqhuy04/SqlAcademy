@@ -173,10 +173,12 @@ export const SqlExecutionDiagram: React.FC<SqlExecutionDiagramProps> = ({
               const isSelected = activeStep === step.num || step.highlight;
 
               return (
-                <div
+                <button
                   key={step.num}
+                  type="button"
+                  aria-pressed={isSelected}
                   onClick={() => setActiveStep(step.num)}
-                  className={`p-3 rounded-[3px] border-2 transition-all cursor-pointer ${
+                  className={`text-left p-3 rounded-[3px] border-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-noir-blood ${
                     isSelected
                       ? 'bg-noir-card border-noir-blood shadow-noir-sm scale-[1.01]'
                       : 'bg-noir-paper border-noir-borderDark/60 opacity-80 hover:opacity-100 hover:border-noir-borderDark'
@@ -201,7 +203,7 @@ export const SqlExecutionDiagram: React.FC<SqlExecutionDiagramProps> = ({
                   <p className="text-[11px] font-serif text-noir-inkMuted leading-snug">
                     {lang === 'VI' ? step.descVi : step.descEn}
                   </p>
-                </div>
+                </button>
               );
             })}
           </div>

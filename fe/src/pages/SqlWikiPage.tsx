@@ -199,6 +199,11 @@ export const SqlWikiPage: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label={
+                  lang === 'VI'
+                    ? 'Tìm kiếm câu lệnh SQL'
+                    : 'Search SQL clause'
+                }
                 placeholder={
                   lang === 'VI'
                     ? 'Tìm kiếm lệnh (SELECT, WHERE, JOIN, GROUP BY...)'
@@ -208,8 +213,10 @@ export const SqlWikiPage: React.FC = () => {
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-noir-inkMuted hover:text-noir-ink p-1 cursor-pointer"
+                  aria-label={lang === 'VI' ? 'Xóa từ khóa tìm kiếm' : 'Clear search query'}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] flex items-center justify-center text-xs font-mono text-noir-inkMuted hover:text-noir-ink rounded cursor-pointer"
                 >
                   ✕
                 </button>
@@ -225,6 +232,7 @@ export const SqlWikiPage: React.FC = () => {
 
               {(selectedExecOrder !== null || searchQuery) && (
                 <button
+                  type="button"
                   onClick={resetAllFilters}
                   className="px-3 py-1.5 bg-noir-card hover:bg-noir-paper border border-noir-borderDark rounded-[3px] text-[11px] font-typewriter text-noir-blood font-bold uppercase tracking-wider flex items-center gap-1 transition-colors cursor-pointer"
                 >
@@ -245,11 +253,13 @@ export const SqlWikiPage: React.FC = () => {
                   <th className="py-3 px-4 sm:px-6 w-[32%] sm:w-[28%] border-r border-noir-borderDark/60">
                     {lang === 'VI' ? 'Lệnh / Cú Pháp SQL' : 'SQL Clause / Command'}
                   </th>
-                  <th className="py-3 px-4 sm:px-6 flex items-center justify-between">
-                    <span>{lang === 'VI' ? 'Tác Dụng & Giải Thích Ngắn Gọn' : 'Brief Explanation & Utility'}</span>
-                    <span className="hidden sm:inline text-[10px] font-mono text-noir-inkMuted lowercase italic">
-                      {lang === 'VI' ? '(Nhấp vào dòng để xem chi tiết & ví dụ)' : '(Click row for details & examples)'}
-                    </span>
+                  <th className="py-3 px-4 sm:px-6">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{lang === 'VI' ? 'Tác Dụng & Giải Thích Ngắn Gọn' : 'Brief Explanation & Utility'}</span>
+                      <span className="hidden sm:inline text-[10px] font-mono text-noir-inkMuted lowercase italic">
+                        {lang === 'VI' ? '(Nhấp vào dòng để xem chi tiết & ví dụ)' : '(Click row for details & examples)'}
+                      </span>
+                    </div>
                   </th>
                 </tr>
               </thead>
@@ -258,8 +268,16 @@ export const SqlWikiPage: React.FC = () => {
                   alphabetSortedEntries.map((entry) => (
                     <tr
                       key={entry.id}
+                      tabIndex={0}
+                      role="button"
                       onClick={() => setActiveModalEntry(entry)}
-                      className="group cursor-pointer hover:bg-amber-500/10 transition-colors"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setActiveModalEntry(entry);
+                        }
+                      }}
+                      className="group cursor-pointer hover:bg-amber-500/10 focus-visible:outline-none focus-visible:bg-amber-500/15 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-noir-blood transition-colors"
                       title={lang === 'VI' ? `Nhấp để xem chi tiết ${entry.name}` : `Click to view details for ${entry.name}`}
                     >
                       {/* Column 1: Clause Name & Step */}

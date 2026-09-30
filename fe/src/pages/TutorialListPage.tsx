@@ -225,7 +225,8 @@ export const TutorialListPage: React.FC = () => {
                         e.stopPropagation();
                         toggleModuleCollapse(module.id);
                       }}
-                      className="p-1.5 rounded border border-noir-borderDark/80 hover:border-noir-blood text-noir-inkMuted hover:text-noir-blood bg-noir-paper hover:bg-noir-card transition-all"
+                      aria-expanded={!isCollapsed}
+                      className="min-w-[38px] min-h-[38px] flex items-center justify-center rounded border border-noir-borderDark/80 hover:border-noir-blood text-noir-inkMuted hover:text-noir-blood bg-noir-paper hover:bg-noir-card transition-all"
                       title={
                         isCollapsed
                           ? lang === 'VI'
@@ -237,7 +238,11 @@ export const TutorialListPage: React.FC = () => {
                       }
                       aria-label={
                         isCollapsed
-                          ? 'Expand module'
+                          ? lang === 'VI'
+                            ? 'Mở rộng học phần'
+                            : 'Expand module'
+                          : lang === 'VI'
+                          ? 'Thu gọn học phần'
                           : 'Collapse module'
                       }
                     >
@@ -257,10 +262,11 @@ export const TutorialListPage: React.FC = () => {
                       const isDone = completedLessonIds.has(lesson.id);
 
                       return (
-                        <div
+                        <button
                           key={lesson.id}
+                          type="button"
                           onClick={() => handleStartLesson(module.id, lesson.id)}
-                          className="py-2.5 px-3 flex items-center justify-between gap-3 hover:bg-noir-card/40 cursor-pointer rounded-[2px] transition-colors group"
+                          className="w-full text-left py-2.5 px-3 flex items-center justify-between gap-3 hover:bg-noir-card/40 cursor-pointer rounded-[2px] transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-noir-blood"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             {isDone && (
@@ -284,7 +290,7 @@ export const TutorialListPage: React.FC = () => {
                             </span>
                             <ChevronRight className="w-4 h-4 text-noir-inkMuted group-hover:translate-x-0.5 transition-transform" />
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>

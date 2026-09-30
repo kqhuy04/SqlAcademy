@@ -71,7 +71,7 @@ export const TutorialDossierTab: React.FC<TutorialDossierTabProps> = ({
         </div>
 
         <p className="font-serif text-sm leading-relaxed text-noir-ink font-medium">
-          {casePain.storyVi}
+          {lang === 'VI' ? casePain.storyVi : (casePain.storyEn || casePain.storyVi)}
         </p>
 
         {/* Naive Query Showcase */}
@@ -126,13 +126,15 @@ export const TutorialDossierTab: React.FC<TutorialDossierTabProps> = ({
                 </table>
               </div>
               <div className="text-[11px] font-mono text-noir-inkMuted italic">
-                ... và {Math.max(0, naiveResult.rowCount - 5)} kẻ khác nữa.
+                {lang === 'VI'
+                  ? `... và ${Math.max(0, naiveResult.rowCount - 5)} kẻ khác nữa.`
+                  : `... and ${Math.max(0, naiveResult.rowCount - 5)} more rows.`}
               </div>
             </div>
           )}
 
           <div className="p-3 bg-amber-950/10 border-l-4 border-amber-700 text-xs font-serif text-amber-950 leading-relaxed rounded-r-[3px]">
-            {casePain.naiveResultNoteVi}
+            {lang === 'VI' ? casePain.naiveResultNoteVi : (casePain.naiveResultNoteEn || casePain.naiveResultNoteVi)}
           </div>
         </div>
       </div>
@@ -147,7 +149,7 @@ export const TutorialDossierTab: React.FC<TutorialDossierTabProps> = ({
             {lang === 'VI' ? '💡 Ẩn Dụ Trinh Thám Cốt Lõi' : '💡 Detective Metaphor'}
           </div>
           <p className="font-serif text-sm font-bold text-noir-ink leading-relaxed italic">
-            "{metaphor.metaphorVi}"
+            "{lang === 'VI' ? metaphor.metaphorVi : (metaphor.metaphorEn || metaphor.metaphorVi)}"
           </p>
         </div>
       </div>
@@ -190,10 +192,10 @@ export const TutorialDossierTab: React.FC<TutorialDossierTabProps> = ({
         <div className="p-3.5 bg-noir-paper border border-noir-borderDark rounded-[3px] space-y-2">
           <div className="flex items-center gap-2 text-xs font-typewriter font-bold text-noir-blood uppercase">
             <Info className="w-4 h-4" />
-            <span>Mệnh đề: {selectedClause.keyword}</span>
+            <span>{lang === 'VI' ? `Mệnh đề: ${selectedClause.keyword}` : `Clause: ${selectedClause.keyword}`}</span>
           </div>
           <p className="font-serif text-xs text-noir-ink font-semibold leading-relaxed">
-            {selectedClause.explanationVi}
+            {lang === 'VI' ? selectedClause.explanationVi : (selectedClause.explanationEn || selectedClause.explanationVi)}
           </p>
         </div>
 

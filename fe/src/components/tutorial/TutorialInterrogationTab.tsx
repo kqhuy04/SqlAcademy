@@ -85,7 +85,7 @@ export const TutorialInterrogationTab: React.FC<TutorialInterrogationTabProps> =
         </div>
 
         <p className="font-serif text-sm font-semibold text-noir-ink leading-relaxed">
-          {predictionQuiz.questionVi}
+          {lang === 'VI' ? predictionQuiz.questionVi : (predictionQuiz.questionEn || predictionQuiz.questionVi)}
         </p>
 
         {/* Code query */}
@@ -120,7 +120,7 @@ export const TutorialInterrogationTab: React.FC<TutorialInterrogationTabProps> =
                   optStyle
                 )}
               >
-                <span>{opt.textVi}</span>
+                <span>{lang === 'VI' ? opt.textVi : (opt.textEn || opt.textVi)}</span>
                 {quizSubmitted && opt.isCorrect && (
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                 )}
@@ -154,11 +154,13 @@ export const TutorialInterrogationTab: React.FC<TutorialInterrogationTabProps> =
               <span>{lang === 'VI' ? 'Lời Giải Thẩm Vấn:' : 'Interrogation Explanation:'}</span>
             </div>
             <p className="font-serif text-xs text-emerald-950 leading-relaxed font-medium">
-              {predictionQuiz.explanationVi}
+              {lang === 'VI' ? predictionQuiz.explanationVi : (predictionQuiz.explanationEn || predictionQuiz.explanationVi)}
             </p>
             {quizLiveResult && (
               <div className="text-[11px] font-mono text-emerald-900 font-bold bg-white/80 p-2 rounded border border-emerald-700/30">
-                Thực tế SQLite trả về: {quizLiveResult.values.map(v => v[0]).join(', ')} ({quizLiveResult.rowCount} kẻ).
+                {lang === 'VI'
+                  ? `Thực tế SQLite trả về: ${quizLiveResult.values.map(v => v[0]).join(', ')} (${quizLiveResult.rowCount} kẻ).`
+                  : `Actual SQLite result: ${quizLiveResult.values.map(v => v[0]).join(', ')} (${quizLiveResult.rowCount} rows).`}
               </div>
             )}
           </div>
@@ -189,7 +191,7 @@ export const TutorialInterrogationTab: React.FC<TutorialInterrogationTabProps> =
               <div key={b.id} className="p-3.5 bg-noir-paper border border-noir-borderDark rounded-[3px] space-y-2.5">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-xs font-typewriter font-bold text-noir-blood uppercase">
-                    {b.titleVi}
+                    {lang === 'VI' ? b.titleVi : (b.titleEn || b.titleVi)}
                   </span>
                   <Button
                     type="button"
@@ -211,17 +213,21 @@ export const TutorialInterrogationTab: React.FC<TutorialInterrogationTabProps> =
                 {hasTested && (
                   <div className="space-y-2 pt-1 animate-fadeIn">
                     <div className="p-2 bg-red-950/15 border-l-4 border-red-700 text-xs font-mono text-red-950 rounded-r">
-                      <span className="font-bold">Hệ thống báo: </span>
-                      {output?.error ? output.error : `Truy vấn trả về ${output?.rowCount ?? 0} dòng (không khớp dữ liệu)!`}
+                      <span className="font-bold">{lang === 'VI' ? 'Hệ thống báo: ' : 'Engine output: '}</span>
+                      {output?.error
+                        ? output.error
+                        : lang === 'VI'
+                        ? `Truy vấn trả về ${output?.rowCount ?? 0} dòng (không khớp dữ liệu)!`
+                        : `Query returned ${output?.rowCount ?? 0} rows (data mismatch)!`}
                     </div>
 
                     <div className="p-2.5 bg-amber-50 border border-amber-300 rounded text-xs font-serif text-amber-950 flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                       <div>
                         <span className="font-typewriter font-bold uppercase text-amber-900 block text-[10px]">
-                          Thẻ nhớ 1 dòng:
+                          {lang === 'VI' ? 'Thẻ nhớ 1 dòng:' : '1-Line Flashcard:'}
                         </span>
-                        <span className="font-bold">{b.flashcardVi}</span>
+                        <span className="font-bold">{lang === 'VI' ? b.flashcardVi : (b.flashcardEn || b.flashcardVi)}</span>
                       </div>
                     </div>
                   </div>
@@ -258,11 +264,11 @@ export const TutorialInterrogationTab: React.FC<TutorialInterrogationTabProps> =
                     {c.keyword}
                   </span>
                   <span className="text-[11px] font-typewriter text-noir-ink font-bold">
-                    {c.labelVi}
+                    {lang === 'VI' ? c.labelVi : (c.labelEn || c.labelVi)}
                   </span>
                 </div>
                 <p className="text-[11px] font-serif text-noir-inkMuted leading-relaxed">
-                  {c.descriptionVi}
+                  {lang === 'VI' ? c.descriptionVi : (c.descriptionEn || c.descriptionVi)}
                 </p>
                 <div className="mt-2 text-[11px] font-mono text-noir-ink font-bold bg-white p-1.5 rounded border border-noir-border truncate">
                   {c.syntaxTemplate}

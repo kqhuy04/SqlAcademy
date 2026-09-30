@@ -67,11 +67,18 @@ export const TutorialSolveTab: React.FC<TutorialSolveTabProps> = ({
     }
   };
 
+  const summaryLines =
+    lang === 'VI'
+      ? takeawayFlashcard.summaryLinesVi
+      : takeawayFlashcard.summaryLinesEn || takeawayFlashcard.summaryLinesVi;
+
   const handleSaveFlashcard = () => {
-    const text = `SỔ TAY THÁM TỬ - ${takeawayFlashcard.reviewTopic}\n` +
-      `1. ${takeawayFlashcard.summaryLinesVi[0]}\n` +
-      `2. ${takeawayFlashcard.summaryLinesVi[1]}\n` +
-      `3. ${takeawayFlashcard.summaryLinesVi[2]}`;
+    const header = lang === 'VI' ? 'SỔ TAY THÁM TỬ' : 'DETECTIVE NOTES';
+    const text =
+      `${header} - ${takeawayFlashcard.reviewTopic}\n` +
+      `1. ${summaryLines[0]}\n` +
+      `2. ${summaryLines[1]}\n` +
+      `3. ${summaryLines[2]}`;
     onSaveToNotes(text);
     setHasSavedNotes(true);
     toast.success(lang === 'VI' ? 'Đã lưu 3 điểm chốt vào Sổ tay thám tử!' : 'Saved takeaway to Detective Notes!');
@@ -100,6 +107,7 @@ export const TutorialSolveTab: React.FC<TutorialSolveTabProps> = ({
           {challenges.map((ch, idx) => {
             const isSelected = currentChallengeIndex === idx;
             const isDone = completedChallengeIds.includes(ch.id);
+            const chTitle = lang === 'VI' ? ch.titleVi : (ch.titleEn || ch.titleVi);
 
             return (
               <button
@@ -120,15 +128,15 @@ export const TutorialSolveTab: React.FC<TutorialSolveTabProps> = ({
               >
                 <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="text-[10px] font-mono font-bold tracking-tight">
-                    {ch.difficulty === 1 && '⭐ Dễ'}
-                    {ch.difficulty === 2 && '⭐⭐ Vừa'}
-                    {ch.difficulty === 3 && '⭐⭐⭐ Khó'}
-                    {ch.difficulty === 4 && '⭐⭐⭐ BẪY'}
+                    {ch.difficulty === 1 && (lang === 'VI' ? '⭐ Dễ' : '⭐ Easy')}
+                    {ch.difficulty === 2 && (lang === 'VI' ? '⭐⭐ Vừa' : '⭐⭐ Medium')}
+                    {ch.difficulty === 3 && (lang === 'VI' ? '⭐⭐⭐ Khó' : '⭐⭐⭐ Hard')}
+                    {ch.difficulty === 4 && (lang === 'VI' ? '⭐⭐⭐ BẪY' : '⭐⭐⭐ TRAP')}
                   </span>
                   {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                 </div>
                 <div className="text-[11px] font-typewriter font-bold truncate">
-                  {ch.titleVi.split(':')[1] || ch.titleVi}
+                  {chTitle.split(':')[1] || chTitle}
                 </div>
               </button>
             );
@@ -140,12 +148,12 @@ export const TutorialSolveTab: React.FC<TutorialSolveTabProps> = ({
           <div className="flex items-center gap-2">
             <Award className="w-4 h-4 text-noir-blood" />
             <h4 className="text-xs font-typewriter font-bold uppercase tracking-wider text-noir-blood">
-              {currentChallenge.titleVi}
+              {lang === 'VI' ? currentChallenge.titleVi : (currentChallenge.titleEn || currentChallenge.titleVi)}
             </h4>
           </div>
 
           <p className="font-serif text-sm font-semibold text-noir-ink leading-relaxed">
-            {currentChallenge.missionVi}
+            {lang === 'VI' ? currentChallenge.missionVi : (currentChallenge.missionEn || currentChallenge.missionVi)}
           </p>
 
           {/* 3-Tier Progressive Hints */}
@@ -173,25 +181,31 @@ export const TutorialSolveTab: React.FC<TutorialSolveTabProps> = ({
             {hintLevel >= 1 && (
               <div className="p-2.5 bg-amber-50 border border-amber-200 rounded text-xs font-serif text-amber-950 animate-fadeIn">
                 <span className="font-bold text-amber-900 block font-typewriter text-[10px] uppercase">
-                  Tầng 1 (Khái niệm):
+                  {lang === 'VI' ? 'Tầng 1 (Khái niệm):' : 'Tier 1 (Concept):'}
                 </span>
-                {currentChallenge.hints.level1ConceptVi}
+                {lang === 'VI'
+                  ? currentChallenge.hints.level1ConceptVi
+                  : currentChallenge.hints.level1ConceptEn || currentChallenge.hints.level1ConceptVi}
               </div>
             )}
 
             {hintLevel >= 2 && (
               <div className="p-2.5 bg-amber-50 border border-amber-200 rounded text-xs font-mono text-amber-950 animate-fadeIn">
                 <span className="font-bold text-amber-900 block font-typewriter text-[10px] uppercase">
-                  Tầng 2 (Khung điền khuyết):
+                  {lang === 'VI' ? 'Tầng 2 (Khung điền khuyết):' : 'Tier 2 (Template):'}
                 </span>
-                <code>{currentChallenge.hints.level2TemplateVi}</code>
+                <code>
+                  {lang === 'VI'
+                    ? currentChallenge.hints.level2TemplateVi
+                    : currentChallenge.hints.level2TemplateEn || currentChallenge.hints.level2TemplateVi}
+                </code>
               </div>
             )}
 
             {hintLevel >= 3 && (
               <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded text-xs font-mono text-emerald-950 animate-fadeIn">
                 <span className="font-bold text-emerald-900 block font-typewriter text-[10px] uppercase">
-                  Tầng 3 (Lời giải hoàn chỉnh):
+                  {lang === 'VI' ? 'Tầng 3 (Lời giải hoàn chỉnh):' : 'Tier 3 (Full Solution):'}
                 </span>
                 <code>{currentChallenge.hints.level3SolutionQuery}</code>
               </div>
@@ -217,7 +231,13 @@ export const TutorialSolveTab: React.FC<TutorialSolveTabProps> = ({
               )}
               <div className="space-y-1">
                 <div className="text-xs font-typewriter font-bold uppercase">
-                  {validationResult.passed ? 'CHÍNH XÁC • PHÁ ÁN THÀNH CÔNG!' : 'KẾT QUẢ CHƯA KHỚP'}
+                  {validationResult.passed
+                    ? lang === 'VI'
+                      ? 'CHÍNH XÁC • PHÁ ÁN THÀNH CÔNG!'
+                      : 'CORRECT • CASE SOLVED!'
+                    : lang === 'VI'
+                    ? 'KẾT QUẢ CHƯA KHỚP'
+                    : 'RESULT MISMATCH'}
                 </div>
                 <div className="font-serif text-xs leading-relaxed font-medium">
                   {lang === 'VI' ? validationResult.messageVi : validationResult.messageEn}
@@ -267,7 +287,7 @@ export const TutorialSolveTab: React.FC<TutorialSolveTabProps> = ({
         </div>
 
         <ol className="space-y-2 list-decimal list-inside font-serif text-xs sm:text-sm font-semibold text-noir-ink leading-relaxed">
-          {takeawayFlashcard.summaryLinesVi.map((line, idx) => (
+          {summaryLines.map((line, idx) => (
             <li key={idx} className="p-2 bg-noir-paper rounded border border-noir-borderDark/40">
               <span>{line}</span>
             </li>

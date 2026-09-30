@@ -127,13 +127,34 @@ export const CaseDetailPage: React.FC = () => {
   }, [lang]);
 
   const handleInsertTableQuery = useCallback(
-    (tableName: string) => {
-      setSqlQuery(`SELECT * FROM ${tableName} LIMIT 10;\n`);
+    (tableOrQuery: string) => {
+      const trimmed = tableOrQuery.trim();
+      const isFullQuery = /^select\s/i.test(trimmed);
+      const nextQuery = isFullQuery ? `${trimmed}\n` : `SELECT * FROM ${trimmed} LIMIT 10;\n`;
+      setSqlQuery(nextQuery);
       setActiveWorkbenchTab('result');
       toast.success(
         lang === 'VI'
-          ? `Đã tạo câu lệnh mẫu cho "${tableName}"`
-          : `Generated query template for "${tableName}"`
+          ? isFullQuery
+            ? 'Đã nạp câu lệnh mẫu vào trình soạn thảo'
+            : `Đã tạo câu lệnh mẫu cho "${trimmed}"`
+          : isFullQuery
+          ? 'Inserted query template into editor'
+          : `Generated query template for "${trimmed}"`
+      );
+    },
+    [setSqlQuery, lang]
+  );
+
+  const handleInsertJoinSnippet = useCallback(
+    (fromTable: string, toTable: string, joinCol: string, targetCol = 'id') => {
+      const snippet = `SELECT *\nFROM ${fromTable}\nJOIN ${toTable} ON ${fromTable}.${joinCol} = ${toTable}.${targetCol}\nLIMIT 10;\n`;
+      setSqlQuery(snippet);
+      setActiveWorkbenchTab('result');
+      toast.success(
+        lang === 'VI'
+          ? `Đã tạo câu lệnh JOIN giữa "${fromTable}" và "${toTable}"`
+          : `Generated JOIN query for "${fromTable}" & "${toTable}"`
       );
     },
     [setSqlQuery, lang]
@@ -774,6 +795,7 @@ export const CaseDetailPage: React.FC = () => {
                   lang={lang}
                   onInsertTableQuery={handleInsertTableQuery}
                   onInsertColumnName={handleInsertColumnName}
+                  onInsertJoinSnippet={handleInsertJoinSnippet}
                 />
               </div>
             )}
@@ -876,6 +898,10 @@ export const CaseDetailPage: React.FC = () => {
         badgeIcon={caseData.badgeIcon}
         onNextQuestion={handleNextQuestion}
         onBackToCases={handleBackToCases}
+        onViewProfile={() => {
+          setSuccessModalState({ isOpen: false, scoreEarned: 0 });
+          navigate('/profile');
+        }}
       />
 
       {/* Subscribe Modal fallback */}

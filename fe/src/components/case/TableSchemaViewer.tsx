@@ -80,7 +80,16 @@ export const TableSchemaViewer: React.FC<TableSchemaViewerProps> = ({
   }
 
   if (!tables || tables.length === 0) {
-    return null;
+    return (
+      <div className="bg-noir-paper border-2 border-dashed border-noir-borderDark rounded-[4px] p-8 text-center text-noir-inkMuted shadow-noir-card">
+        <Database className="w-8 h-8 mx-auto mb-2 opacity-60 text-noir-borderDark" />
+        <p className="text-xs font-typewriter font-bold uppercase text-noir-ink">
+          {lang === 'VI'
+            ? 'Chưa có thông tin cấu trúc bảng'
+            : 'No table schema metadata available'}
+        </p>
+      </div>
+    );
   }
 
   const allExpanded = tables.every((t) => isTableExpanded(t.tableName));

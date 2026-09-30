@@ -12,6 +12,7 @@ interface CaseSuccessModalProps {
   badgeIcon?: string;
   onNextQuestion: () => void;
   onBackToCases: () => void;
+  onViewProfile?: () => void;
 }
 
 export const CaseSuccessModal: React.FC<CaseSuccessModalProps> = ({
@@ -22,6 +23,7 @@ export const CaseSuccessModal: React.FC<CaseSuccessModalProps> = ({
   badgeIcon,
   onNextQuestion,
   onBackToCases,
+  onViewProfile,
 }) => {
   const { lang } = useLanguageStore();
 
@@ -99,10 +101,10 @@ export const CaseSuccessModal: React.FC<CaseSuccessModalProps> = ({
               </Button>
               <Button
                 variant="gold"
-                onClick={onBackToCases}
+                onClick={onViewProfile || onBackToCases}
                 leftIcon={<Award className="w-4 h-4" />}
               >
-                {lang === 'VI' ? 'Ghi Vào Sổ Tay Quân Số' : 'Record in Personnel Dossier'}
+                {lang === 'VI' ? 'Xem Hồ Sơ & Huy Hiệu' : 'View Detective Badge'}
               </Button>
             </>
           )}

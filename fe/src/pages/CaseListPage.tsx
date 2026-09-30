@@ -461,9 +461,13 @@ export const CaseListPage: React.FC = () => {
               {lang === 'VI' ? 'Không Tìm Thấy Hồ Sơ Phù Hợp' : 'No Matching Dossiers Found'}
             </h3>
             <p className="text-xs font-serif italic text-noir-inkMuted mt-1">
-              {lang === 'VI'
-                ? `Không có hồ sơ nào trùng khớp với từ khóa tìm kiếm “${searchQuery}”.`
-                : `No case records match your query keyword “${searchQuery}”.`}
+              {searchQuery.trim()
+                ? lang === 'VI'
+                  ? `Không có hồ sơ nào trùng khớp với từ khóa tìm kiếm “${searchQuery}”.`
+                  : `No case records match your query keyword “${searchQuery}”.`
+                : lang === 'VI'
+                ? 'Không có hồ sơ vụ án nào khớp với bộ lọc hiện tại.'
+                : 'No case dossiers match the active filter criteria.'}
             </p>
             <Button
               variant="secondary"
@@ -472,6 +476,7 @@ export const CaseListPage: React.FC = () => {
               onClick={() => {
                 setSearchQuery('');
                 setSelectedDifficulty('ALL');
+                setStatusFilter('ALL');
               }}
             >
               {lang === 'VI' ? 'Xóa Bộ Lọc Tìm Kiếm' : 'Clear Search Filters'}

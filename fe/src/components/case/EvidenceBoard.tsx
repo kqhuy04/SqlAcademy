@@ -24,7 +24,7 @@ interface EvidenceBoardProps {
   lang: 'EN' | 'VI';
   onInsertTableQuery?: (tableName: string) => void;
   onInsertColumnName?: (columnName: string) => void;
-  onInsertJoinSnippet?: (fromTable: string, toTable: string, joinCol: string) => void;
+  onInsertJoinSnippet?: (fromTable: string, toTable: string, joinCol: string, targetCol?: string) => void;
 }
 
 // Icon mapper for crime domain tables
@@ -218,9 +218,10 @@ export const EvidenceBoard: React.FC<EvidenceBoardProps> = ({
               return (
                 <button
                   key={idx}
+                  type="button"
                   onClick={() => {
                     if (onInsertJoinSnippet) {
-                      onInsertJoinSnippet(rel.fromTable, rel.toTable, rel.fromCol);
+                      onInsertJoinSnippet(rel.fromTable, rel.toTable, rel.fromCol, rel.toCol);
                     } else if (onInsertTableQuery) {
                       onInsertTableQuery(
                         `SELECT * FROM ${rel.fromTable} JOIN ${rel.toTable} ON ${rel.fromTable}.${rel.fromCol} = ${rel.toTable}.${rel.toCol} LIMIT 10;`
@@ -232,7 +233,7 @@ export const EvidenceBoard: React.FC<EvidenceBoardProps> = ({
                   className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono transition-all border ${
                     isMatch
                       ? 'bg-red-800 text-white border-red-900 shadow-sm scale-105'
-                      : 'bg-[#EDE3C9] text-noir-ink border-[#C4B6A0] hover:border-red-600'
+                      : 'bg-noir-paper text-noir-ink border-noir-border hover:border-red-600'
                   }`}
                   title={
                     lang === 'VI'
@@ -253,74 +254,85 @@ export const EvidenceBoard: React.FC<EvidenceBoardProps> = ({
       )}
 
       {/* Grid of Evidence Cards (Pinned Manila Cards) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredTables.map((table) => {
-          const theme = getTableVisualTheme(table.tableName);
-          const Icon = theme.icon;
-          const isExpanded = expandedCards[table.tableName] ?? true;
-          const isSampleShown = previewSample[table.tableName] ?? false;
-          const isHighlighted =
-            hoveredTable === table.tableName ||
-            relationships.some(
-              (r) =>
-                (hoveredTable === r.fromTable && r.toTable === table.tableName) ||
-                (hoveredTable === r.toTable && r.fromTable === table.tableName)
-            );
+      {filteredTables.length === 0 ? (
+        <div className="bg-noir-paper border border-dashed border-noir-borderDark rounded-lg p-8 text-center text-noir-inkMuted">
+          <Database className="w-8 h-8 mx-auto mb-2 opacity-60" />
+          <p className="text-xs font-typewriter font-bold uppercase text-noir-ink">
+            {lang === 'VI'
+              ? 'Không tìm thấy bảng dữ liệu phù hợp'
+              : 'No matching evidence tables found'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredTables.map((table) => {
+            const theme = getTableVisualTheme(table.tableName);
+            const Icon = theme.icon;
+            const isExpanded = expandedCards[table.tableName] ?? true;
+            const isSampleShown = previewSample[table.tableName] ?? false;
+            const isHighlighted =
+              hoveredTable === table.tableName ||
+              relationships.some(
+                (r) =>
+                  (hoveredTable === r.fromTable && r.toTable === table.tableName) ||
+                  (hoveredTable === r.toTable && r.fromTable === table.tableName)
+              );
 
-          return (
-            <div
-              key={table.tableName}
-              onMouseEnter={() => setHoveredTable(table.tableName)}
-              onMouseLeave={() => setHoveredTable(null)}
-              className={`relative bg-[#F5ECD7] rounded-lg border transition-all duration-200 shadow-md ${
-                isHighlighted
-                  ? 'ring-2 ring-red-700 border-red-700 shadow-xl -translate-y-0.5'
-                  : 'border-[#C4B6A0] hover:border-[#9A8870]'
-              }`}
-            >
-              {/* Brass Pushpin at top center */}
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-300 via-amber-600 to-amber-900 border border-amber-950 shadow-md flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-100" />
-                </div>
-              </div>
-
-              {/* Card Header (Manila Tab Style) */}
-              <div className="p-3 pt-3.5 border-b border-[#E2D5B8] flex items-center justify-between gap-2 bg-[#EFE5CE] rounded-t-lg">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="p-1.5 rounded bg-[#E5D9BC] border border-[#C4B6A0] text-noir-ink shrink-0">
-                    <Icon className="w-4 h-4" />
+            return (
+              <div
+                key={table.tableName}
+                onMouseEnter={() => setHoveredTable(table.tableName)}
+                onMouseLeave={() => setHoveredTable(null)}
+                className={`relative bg-[#F5ECD7] rounded-lg border transition-all duration-200 shadow-md ${
+                  isHighlighted
+                    ? 'ring-2 ring-red-700 border-red-700 shadow-xl -translate-y-0.5'
+                    : 'border-[#C4B6A0] hover:border-[#9A8870]'
+                }`}
+              >
+                {/* Brass Pushpin at top center */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-300 via-amber-600 to-amber-900 border border-amber-950 shadow-md flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-100" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono font-bold text-sm text-noir-ink truncate tracking-tight">
-                        {table.tableName}
-                      </span>
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-typewriter border ${theme.badgeColor}`}>
-                        {theme.tag}
-                      </span>
+                </div>
+
+                {/* Card Header (Manila Tab Style) */}
+                <div className="p-3 pt-3.5 border-b border-[#E2D5B8] flex items-center justify-between gap-2 bg-[#EFE5CE] rounded-t-lg">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="p-1.5 rounded bg-[#E5D9BC] border border-[#C4B6A0] text-noir-ink shrink-0">
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-[11px] text-noir-inkMuted truncate font-serif italic">
-                      {lang === 'VI'
-                        ? table.descriptionVi || 'Bảng dữ liệu trinh sát'
-                        : table.descriptionEn || 'Forensic dataset'}
-                    </p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-sm text-noir-ink truncate tracking-tight">
+                          {table.tableName}
+                        </span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-typewriter border ${theme.badgeColor}`}>
+                          {theme.tag}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-noir-inkMuted truncate font-serif italic">
+                        {lang === 'VI'
+                          ? table.descriptionVi || 'Bảng dữ liệu trinh sát'
+                          : table.descriptionEn || 'Forensic dataset'}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => {
-                      if (onInsertTableQuery) {
-                        onInsertTableQuery(`SELECT * FROM ${table.tableName} LIMIT 10;`);
-                      }
-                    }}
-                    className="p-1 rounded text-noir-inkMuted hover:text-noir-blood hover:bg-[#E5D9BC] transition-colors"
-                    title={lang === 'VI' ? 'Chèn SELECT * vào Editor' : 'Insert SELECT * into Editor'}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onInsertTableQuery) {
+                          onInsertTableQuery(table.tableName);
+                        }
+                      }}
+                      className="p-1 rounded text-noir-inkMuted hover:text-noir-blood hover:bg-[#E5D9BC] transition-colors"
+                      title={lang === 'VI' ? 'Chèn SELECT * vào Editor' : 'Insert SELECT * into Editor'}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
                   <button
                     onClick={() => handleCopy(table.tableName, 'Table')}
                     className="p-1 rounded text-noir-inkMuted hover:text-noir-ink hover:bg-[#E5D9BC] transition-colors"
@@ -436,7 +448,8 @@ export const EvidenceBoard: React.FC<EvidenceBoardProps> = ({
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

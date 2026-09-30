@@ -34,7 +34,7 @@ export const Navbar: React.FC = () => {
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-[2px] text-xs font-typewriter uppercase tracking-wider transition-all select-none whitespace-nowrap',
+      'flex items-center gap-1.5 xl:gap-2 px-2.5 xl:px-3 min-h-[40px] py-1.5 rounded-[2px] text-xs font-typewriter uppercase tracking-wider transition-all select-none whitespace-nowrap',
       isActive
         ? 'text-noir-blood bg-noir-card/90 border-b-2 border-noir-blood font-bold shadow-noir-sm'
         : 'text-noir-ink hover:text-noir-blood hover:bg-noir-card/50 font-bold'
@@ -46,19 +46,19 @@ export const Navbar: React.FC = () => {
         {/* Top classified document edge */}
         <div className="h-[3px] w-full bg-noir-blood" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[4.25rem] py-2.5 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[4.25rem] py-2.5 flex items-center justify-between gap-2">
           {/* Brand Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <AppLogo className="w-9 h-9 group-hover:scale-105 transition-transform" />
             <div>
-              <div className="text-sm sm:text-base font-display font-black tracking-wider uppercase text-noir-ink group-hover:text-noir-blood transition-colors">
+              <div className="text-sm sm:text-base font-display font-black tracking-wider uppercase text-noir-ink group-hover:text-noir-blood transition-colors whitespace-nowrap">
                 SQL DETECTIVE NOIR
               </div>
             </div>
           </Link>
 
           {/* Navigation Links */}
-          <nav className="hidden sm:flex items-center gap-1 sm:gap-1.5">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5">
             <NavLink to="/tutorials" className={navLinkClasses}>
               <GraduationCap className="w-4 h-4 text-noir-candleDark" />
               <span>{lang === 'VI' ? 'Học Viện' : 'Academy'}</span>
@@ -82,13 +82,13 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Right Action Section */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={toggleLang}
               title={lang === 'VI' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
               aria-label={lang === 'VI' ? 'Switch language to English' : 'Chuyển ngôn ngữ sang Tiếng Việt'}
-              className="flex items-center gap-1 px-2 py-1 rounded-[2px] border border-noir-borderDark bg-noir-card hover:bg-noir-cardHover text-xs font-typewriter font-bold text-noir-ink transition-colors"
+              className="flex items-center justify-center gap-1 px-2.5 min-h-[40px] rounded-[2px] border border-noir-borderDark bg-noir-card hover:bg-noir-cardHover text-xs font-typewriter font-bold text-noir-ink transition-colors"
             >
               <Globe className="w-3.5 h-3.5 text-noir-candleDark" />
               <span>{lang}</span>
@@ -97,14 +97,14 @@ export const Navbar: React.FC = () => {
             {isAuthenticated && user ? (
               <>
                 {/* Stats Pill */}
-                <div className="flex items-center gap-1 bg-amber-950/10 border border-amber-700/20 px-2.5 py-1 rounded-[3px] text-xs font-mono font-bold text-amber-800 shadow-sm select-none">
+                <div className="flex items-center gap-1 bg-amber-950/10 border border-amber-700/20 px-2.5 py-1.5 rounded-[3px] text-xs font-mono font-bold text-amber-800 shadow-sm select-none">
                   <span className="leading-none">{user.totalScore ?? 0}</span>
                   <span className="leading-none text-xs">⭐</span>
                 </div>
 
                 {/* Premium Status Badge (only for active special agents) */}
                 {isPremium && (
-                  <Badge variant="gold" size="sm" className="hidden lg:inline-flex gap-1 py-1">
+                  <Badge variant="gold" size="sm" className="hidden xl:inline-flex gap-1 py-1">
                     <Sparkles className="w-3 h-3 text-noir-candleDark" />
                     <span>{lang === 'VI' ? 'ĐẶC VỤ CAO CẤP' : 'SPECIAL AGENT'}</span>
                   </Badge>
@@ -114,7 +114,7 @@ export const Navbar: React.FC = () => {
                 <div className="flex items-center gap-2 pl-2 border-l border-noir-borderDark/60">
                   <Link
                     to="/profile"
-                    className="text-xs font-typewriter font-bold text-noir-ink hover:text-noir-blood transition-colors flex items-center gap-1.5"
+                    className="text-xs font-typewriter font-bold text-noir-ink hover:text-noir-blood transition-colors flex items-center gap-1.5 min-h-[40px] px-1"
                   >
                     <div className="w-6 h-6 rounded-[2px] bg-noir-card border border-noir-borderDark flex items-center justify-center text-[11px] font-bold text-noir-blood overflow-hidden shrink-0">
                       {user.avatarUrl ? (
@@ -123,13 +123,15 @@ export const Navbar: React.FC = () => {
                         user.username.charAt(0).toUpperCase()
                       )}
                     </div>
-                    <span>{user.username}</span>
+                    <span className="max-w-[120px] truncate">{user.username}</span>
                   </Link>
 
                   <button
+                    type="button"
                     onClick={handleLogout}
                     title={lang === 'VI' ? 'Đăng xuất' : 'Sign Out'}
-                    className="p-1.5 rounded text-noir-inkMuted hover:text-noir-blood hover:bg-noir-card/60 transition-colors"
+                    aria-label={lang === 'VI' ? 'Đăng xuất' : 'Sign Out'}
+                    className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded text-noir-inkMuted hover:text-noir-blood hover:bg-noir-card/60 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                   </button>
@@ -138,12 +140,12 @@ export const Navbar: React.FC = () => {
             ) : (
               <div className="flex items-center gap-2 shrink-0">
                 <Link to="/login">
-                  <Button variant="secondary" size="sm" className="whitespace-nowrap">
+                  <Button variant="secondary" size="sm" className="whitespace-nowrap min-h-[40px]">
                     {lang === 'VI' ? 'Đăng Nhập' : 'Sign In'}
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button variant="gold" size="sm" className="whitespace-nowrap" leftIcon={<Award className="w-4 h-4" />}>
+                  <Button variant="gold" size="sm" className="whitespace-nowrap min-h-[40px]" leftIcon={<Award className="w-4 h-4" />}>
                     {lang === 'VI' ? 'Đăng Ký' : 'Register'}
                   </Button>
                 </Link>
@@ -151,14 +153,14 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile menu trigger */}
-          <div className="sm:hidden flex items-center gap-2">
+          {/* Mobile & Tablet menu trigger */}
+          <div className="lg:hidden flex items-center gap-2">
             <button
               type="button"
               onClick={toggleLang}
               title={lang === 'VI' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
               aria-label={lang === 'VI' ? 'Switch language to English' : 'Chuyển ngôn ngữ sang Tiếng Việt'}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-typewriter font-bold border border-noir-borderDark bg-noir-card text-noir-ink hover:bg-noir-cardHover transition-colors"
+              className="flex items-center justify-center gap-1 px-2.5 min-h-[40px] rounded text-xs font-typewriter font-bold border border-noir-borderDark bg-noir-card text-noir-ink hover:bg-noir-cardHover transition-colors"
             >
               <Globe className="w-3.5 h-3.5 text-noir-candleDark" />
               <span>{lang}</span>
@@ -168,7 +170,7 @@ export const Navbar: React.FC = () => {
               to="/tutorials"
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-1 px-2.5 py-1 rounded text-xs font-typewriter font-bold uppercase transition-colors border',
+                  'flex items-center gap-1 px-2.5 min-h-[40px] rounded text-xs font-typewriter font-bold uppercase transition-colors border',
                   isActive
                     ? 'bg-noir-blood text-noir-parchment border-noir-bloodDark'
                     : 'bg-noir-card border-noir-borderDark text-noir-ink hover:bg-noir-cardHover'
@@ -179,17 +181,28 @@ export const Navbar: React.FC = () => {
               <span>{lang === 'VI' ? 'Học Viện' : 'Academy'}</span>
             </NavLink>
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-noir-inkMuted hover:text-noir-ink rounded hover:bg-noir-card/60"
+              aria-label={
+                mobileMenuOpen
+                  ? lang === 'VI'
+                    ? 'Đóng menu điều hướng'
+                    : 'Close navigation menu'
+                  : lang === 'VI'
+                  ? 'Mở menu điều hướng'
+                  : 'Open navigation menu'
+              }
+              aria-expanded={mobileMenuOpen}
+              className="min-w-[40px] min-h-[40px] flex items-center justify-center text-noir-inkMuted hover:text-noir-ink rounded hover:bg-noir-card/60"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown */}
+        {/* Mobile & Tablet Dropdown */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t-2 border-noir-borderDark bg-noir-paper px-4 pt-3 pb-5 space-y-3 shadow-noir-card">
+          <div className="lg:hidden border-t-2 border-noir-borderDark bg-noir-paper px-4 pt-3 pb-5 space-y-3 shadow-noir-card">
             {isAuthenticated && user ? (
               <>
                 <div className="flex items-center justify-between pb-3 border-b border-noir-borderDark">

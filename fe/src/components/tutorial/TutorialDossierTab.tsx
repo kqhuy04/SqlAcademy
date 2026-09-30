@@ -17,6 +17,7 @@ import { cn } from '@/utils/cn';
 interface TutorialDossierTabProps {
   dossier: Tab1Dossier;
   db: Database | null;
+  isDbLoading?: boolean;
   lang: 'VI' | 'EN';
   onProceedToInterrogation: () => void;
 }
@@ -24,6 +25,7 @@ interface TutorialDossierTabProps {
 export const TutorialDossierTab: React.FC<TutorialDossierTabProps> = ({
   dossier,
   db,
+  isDbLoading = false,
   lang,
   onProceedToInterrogation,
 }) => {
@@ -200,7 +202,16 @@ export const TutorialDossierTab: React.FC<TutorialDossierTabProps> = ({
         </div>
 
         {/* Live Filtered Table Result */}
-        {liveResult && (
+        {isDbLoading && !liveResult ? (
+          <div className="py-6 px-4 bg-noir-paper border border-dashed border-noir-borderDark rounded flex items-center justify-center gap-2 text-xs font-typewriter text-noir-inkMuted">
+            <span className="w-4 h-4 rounded-full border-2 border-noir-borderDark border-t-noir-blood animate-spin" />
+            <span>
+              {lang === 'VI'
+                ? 'Đang khởi tạo cơ sở dữ liệu hiện trường...'
+                : 'Initializing crime scene database...'}
+            </span>
+          </div>
+        ) : liveResult ? (
           <div className="space-y-2 pt-2">
             <div className="flex items-center justify-between text-xs font-typewriter text-noir-ink font-bold">
               <span className="flex items-center gap-1.5 text-emerald-800">
@@ -246,7 +257,7 @@ export const TutorialDossierTab: React.FC<TutorialDossierTabProps> = ({
               </table>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Navigation to Tab 2 */}

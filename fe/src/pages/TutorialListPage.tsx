@@ -26,7 +26,7 @@ export const TutorialListPage: React.FC = () => {
   const { lang } = useLanguageStore();
 
   // Fetch user progress from BE if authenticated
-  const { data: progressData } = useQuery({
+  const { data: progressData, isLoading: isProgressLoading } = useQuery({
     queryKey: ['tutorial_progress'],
     queryFn: tutorialApi.getProgress,
     enabled: isAuthenticated,
@@ -104,10 +104,18 @@ export const TutorialListPage: React.FC = () => {
         </div>
 
         {/* Module Directory Controls */}
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xs font-typewriter uppercase tracking-wider text-noir-inkMuted font-bold">
-            {lang === 'VI' ? 'DANH SÁCH HỌC PHẦN' : 'MODULE DIRECTORY'}
-          </span>
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-typewriter uppercase tracking-wider text-noir-inkMuted font-bold">
+              {lang === 'VI' ? 'DANH SÁCH HỌC PHẦN' : 'MODULE DIRECTORY'}
+            </span>
+            {isAuthenticated && isProgressLoading && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-noir-inkMuted bg-noir-card px-2 py-0.5 rounded border border-noir-borderDark/60">
+                <span className="w-3 h-3 rounded-full border-2 border-noir-borderDark border-t-noir-blood animate-spin" />
+                <span>{lang === 'VI' ? 'Đang đồng bộ tiến độ...' : 'Syncing progress...'}</span>
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={toggleAllModules}

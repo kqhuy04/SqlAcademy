@@ -111,6 +111,8 @@ export const TutorialWorkspacePage: React.FC = () => {
   const [queryHistory, setQueryHistory] = useState<QueryHistoryItem[]>([]);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [dbLoadError, setDbLoadError] = useState<string | null>(null);
+  const [dbInstance, setDbInstance] = useState<Database | null>(null);
+  const [isDbLoading, setIsDbLoading] = useState<boolean>(true);
 
   // 3-Tab Pedagogical States (Hồ Sơ Vụ Án • Thẩm Vấn • Phá Án)
   const [activePedagogicalTab, setActivePedagogicalTab] = useState<'dossier' | 'interrogation' | 'solve'>('dossier');
@@ -132,7 +134,7 @@ export const TutorialWorkspacePage: React.FC = () => {
       return 'bg-amber-500/15 border-amber-700/40 text-amber-900';
     }
     if (upper.includes('JOIN') || upper.includes('ON') || upper.includes('UNION')) {
-      return 'bg-[#EDE3C9] border-[#9A8870]/60 text-[#3D2F24]';
+      return 'bg-noir-paper border-noir-borderDark/60 text-noir-ink';
     }
     return 'bg-emerald-950/10 border-emerald-700/30 text-emerald-800';
   };
@@ -162,6 +164,7 @@ export const TutorialWorkspacePage: React.FC = () => {
   // Initialize DB session on lesson change
   useEffect(() => {
     if (!currentLesson) return;
+    let cancelled = false;
 
     setActivePedagogicalTab('dossier');
     setCurrentChallengeIndex(0);
@@ -179,6 +182,8 @@ export const TutorialWorkspacePage: React.FC = () => {
     setValidationResult(null);
     setAttempts(1);
     setDbLoadError(null);
+    setIsDbLoading(true);
+    setDbInstance(null);
 
     // If it's an optimization lesson, default to result tab or terminal
     setActiveWorkbenchTab('result');
@@ -195,15 +200,32 @@ export const TutorialWorkspacePage: React.FC = () => {
 
     createSessionDb(currentLesson.schemaSql, currentLesson.seedSql)
       .then((db) => {
+        if (cancelled) {
+          try {
+            db.close();
+          } catch {
+            // ignore
+          }
+          return;
+        }
         dbRef.current = db;
+        setDbInstance(db);
+        setIsDbLoading(false);
       })
       .catch((err) => {
+        if (cancelled) return;
         const msg = err instanceof Error ? err.message : String(err);
         setDbLoadError(msg);
-        toast.error(`Failed to initialize SQLite WASM: ${msg}`);
+        setIsDbLoading(false);
+        toast.error(
+          lang === 'VI'
+            ? `Không thể khởi tạo cơ sở dữ liệu SQLite: ${msg}`
+            : `Failed to initialize SQLite WASM: ${msg}`
+        );
       });
 
     return () => {
+      cancelled = true;
       if (dbRef.current) {
         try {
           dbRef.current.close();
@@ -218,7 +240,11 @@ export const TutorialWorkspacePage: React.FC = () => {
   // Execute user query
   const handleRunQuery = useCallback(() => {
     if (!dbRef.current) {
-      toast.error('Database is initializing, please wait...');
+      toast.error(
+        lang === 'VI'
+          ? 'Đang khởi tạo cơ sở dữ liệu, vui lòng đợi...'
+          : 'Database is initializing, please wait...'
+      );
       return;
     }
     setIsQueryRunning(true);
@@ -505,7 +531,9 @@ export const TutorialWorkspacePage: React.FC = () => {
         {/* Database load error banner if any */}
         {dbLoadError && (
           <div className="mb-4 p-3 bg-red-950/20 border border-noir-blood text-noir-blood rounded text-xs font-mono">
-            Error initializing in-browser database: {dbLoadError}
+            {lang === 'VI'
+              ? `Không thể khởi tạo cơ sở dữ liệu trong trình duyệt: ${dbLoadError}`
+              : `Error initializing in-browser database: ${dbLoadError}`}
           </div>
         )}
 
@@ -568,7 +596,8 @@ export const TutorialWorkspacePage: React.FC = () => {
             {activePedagogicalTab === 'dossier' && (
               <TutorialDossierTab
                 dossier={currentLesson.tab1Dossier}
-                db={dbRef.current}
+                db={dbInstance}
+                isDbLoading={isDbLoading}
                 lang={lang}
                 onProceedToInterrogation={() => setActivePedagogicalTab('interrogation')}
               />
@@ -578,7 +607,7 @@ export const TutorialWorkspacePage: React.FC = () => {
             {activePedagogicalTab === 'interrogation' && currentLesson.tab2Interrogation && (
               <TutorialInterrogationTab
                 interrogation={currentLesson.tab2Interrogation}
-                db={dbRef.current}
+                db={dbInstance}
                 lang={lang}
                 onInsertSnippet={handleInsertSnippet}
                 onProceedToSolve={() => setActivePedagogicalTab('solve')}

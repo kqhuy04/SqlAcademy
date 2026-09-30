@@ -34,7 +34,7 @@ export default {
         display: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
         serif: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'Consolas', 'monospace'],
-        typewriter: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
+        typewriter: ['"IBM Plex Mono"', 'Consolas', 'monospace'],
         sans: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {

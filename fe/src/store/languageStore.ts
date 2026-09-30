@@ -10,16 +10,24 @@ interface LanguageState {
   toggleLang: () => void;
 }
 
+const syncHtmlLang = (lang: AppLanguage) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang.toLowerCase();
+  }
+};
+
 const getInitialLanguage = (): AppLanguage => {
+  let initial: AppLanguage = 'VI';
   try {
     const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
     if (saved === 'EN' || saved === 'VI') {
-      return saved;
+      initial = saved;
     }
   } catch {
     // ignore
   }
-  return 'VI';
+  syncHtmlLang(initial);
+  return initial;
 };
 
 export const useLanguageStore = create<LanguageState>((set) => ({
@@ -30,6 +38,7 @@ export const useLanguageStore = create<LanguageState>((set) => ({
     } catch {
       // ignore
     }
+    syncHtmlLang(lang);
     set({ lang });
   },
   toggleLang: () => {
@@ -40,6 +49,7 @@ export const useLanguageStore = create<LanguageState>((set) => ({
       } catch {
         // ignore
       }
+      syncHtmlLang(nextLang);
       return { lang: nextLang };
     });
   },

@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F5ECD7;
+    color: #1A1612;
+    font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+    background-image: 
+      radial-gradient(#C4B6A0 0.65px, transparent 0.65px),
+      radial-gradient(#9A8870 0.65px, #F5ECD7 0.65px);
+    background-size: 26px 26px;
+    background-position: 0 0, 13px 13px;
+    background-attachment: fixed;
+  }
+
+  /* Vintage sepia scrollbar */
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #EDE3C9;
+    border-left: 1px solid #C4B6A0;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #C4B6A0;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9A8870;
+  }
+}
+
+/* Rubber Stamp Styling */
+.rubber-stamp {
+  display: inline-block;
+  text-transform: uppercase;
+  font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 0.2rem 0.6rem;
+  border: 2px dashed currentColor;
+  mask-image: linear-gradient(rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.85));
+}
+
+/* CodeMirror overrides: Clean White Forensic Sheet */
+.cm-theme {
+  height: 100% !important;
+  min-height: 180px !important;
+  background-color: #ffffff !important;
+}
+
+.cm-editor {
+  height: 100% !important;
+  min-height: 180px !important;
+  background-color: #ffffff !important;
+  color: #1A1612 !important;
+}
+
+.cm-scroller {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace !important;
+  font-size: 13.5px !important;
+  line-height: 1.65 !important;
+  min-height: 180px !important;
+  height: 100% !important;
+  background-color: #ffffff !important;
+}
+
+.cm-content {
+  caret-color: #8B1A1A !important;
+  color: #1A1612 !important;
+  background-color: #ffffff !important;
+  min-height: 180px !important;
+}
+
+.cm-gutters {
+  background-color: #f8f6f0 !important;
+  border-right: 1px solid #e2d9c8 !important;
+  color: #8C7E6D !important;
+  min-height: 100% !important;
+}
+
+.cm-activeLine {
+  background-color: rgba(139, 26, 26, 0.04) !important;
+}
+
+.cm-activeLineGutter {
+  background-color: #eae1cd !important;
+  color: #6D1212 !important;
+  font-weight: 700 !important;
+}
+
+.cm-selectionBackground, ::selection {
+  background-color: rgba(139, 26, 26, 0.15) !important;
+}
+
+/* Animations */
+@keyframes stamp-impact {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(0deg);
+  }
+  60% {
+    opacity: 0.9;
+    transform: scale(0.95) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.animate-stamp-impact {
+  animation: stamp-impact 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Print styling for Certificate export */
+@media print {
+  body {
+    background-color: #F7EFE0 !important;
+    background-image: none !important;
+    color: #1A1612 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  header, footer, .no-print {
+    display: none !important;
+  }
+
+  .certificate-print-area {
+    box-shadow: none !important;
+    border: 3px solid #3D2B1F !important;
+    background-color: #F7EFE0 !important;
+    page-break-inside: avoid !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 1cm;
+  }
+}

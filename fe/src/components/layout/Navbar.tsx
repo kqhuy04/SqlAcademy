@@ -16,13 +16,14 @@ import {
   GraduationCap,
   BookOpen,
   Newspaper,
+  Globe,
 } from 'lucide-react';
 import { AppLogo } from '@/components/ui/AppLogo';
 import { cn } from '@/utils/cn';
 
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, isPremium, logout } = useAuth();
-  const { lang } = useLanguageStore();
+  const { lang, toggleLang } = useLanguageStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -82,6 +83,17 @@ export const Navbar: React.FC = () => {
 
           {/* Right Action Section */}
           <div className="hidden sm:flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleLang}
+              title={lang === 'VI' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
+              aria-label={lang === 'VI' ? 'Switch language to English' : 'Chuyển ngôn ngữ sang Tiếng Việt'}
+              className="flex items-center gap-1 px-2 py-1 rounded-[2px] border border-noir-borderDark bg-noir-card hover:bg-noir-cardHover text-xs font-typewriter font-bold text-noir-ink transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5 text-noir-candleDark" />
+              <span>{lang}</span>
+            </button>
+
             {isAuthenticated && user ? (
               <>
                 {/* Stats Pill */}
@@ -141,6 +153,16 @@ export const Navbar: React.FC = () => {
 
           {/* Mobile menu trigger */}
           <div className="sm:hidden flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleLang}
+              title={lang === 'VI' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
+              aria-label={lang === 'VI' ? 'Switch language to English' : 'Chuyển ngôn ngữ sang Tiếng Việt'}
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-typewriter font-bold border border-noir-borderDark bg-noir-card text-noir-ink hover:bg-noir-cardHover transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5 text-noir-candleDark" />
+              <span>{lang}</span>
+            </button>
 
             <NavLink
               to="/tutorials"
@@ -275,6 +297,14 @@ export const Navbar: React.FC = () => {
                 >
                   <FileText className="w-4 h-4 text-noir-blood" />
                   <span>{lang === 'VI' ? 'Hồ Sơ Vụ Án' : 'Case Files'}</span>
+                </Link>
+                <Link
+                  to="/posts"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 rounded text-xs font-typewriter text-noir-ink hover:bg-noir-card"
+                >
+                  <Newspaper className="w-4 h-4 text-noir-candleDark" />
+                  <span>{lang === 'VI' ? 'Bản Tin Điều Tra' : 'Detective Dispatches'}</span>
                 </Link>
                 <Link
                   to="/wiki"

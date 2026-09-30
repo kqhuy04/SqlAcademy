@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, type HTMLMotionProps } from 'framer-motion';
+import { motion, useReducedMotion, type HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/utils/cn';
 
 export interface StampBadgeProps extends HTMLMotionProps<'div'> {
@@ -21,6 +21,8 @@ export const StampBadge: React.FC<StampBadgeProps> = ({
   children,
   ...props
 }) => {
+  const shouldReduceMotion = useReducedMotion();
+
   const variantStyles = {
     blood: 'border-noir-blood text-noir-blood bg-noir-blood/5',
     crime: 'border-noir-blood text-noir-blood bg-noir-blood/5',
@@ -37,7 +39,7 @@ export const StampBadge: React.FC<StampBadgeProps> = ({
     lg: 'text-sm px-3.5 py-1.5 border-2',
   };
 
-  if (!animateIn) {
+  if (!animateIn || shouldReduceMotion) {
     return (
       <div
         className={cn(

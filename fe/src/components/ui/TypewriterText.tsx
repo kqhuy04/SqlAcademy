@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface TypewriterTextProps {
   text: string;
@@ -21,6 +21,17 @@ export const TypewriterText: React.FC<TypewriterTextProps> = ({
   const [isDone, setIsDone] = useState(false);
 
   useEffect(() => {
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      setDisplayedText(text);
+      setIsDone(true);
+      if (onComplete) onComplete();
+      return;
+    }
+
     setDisplayedText('');
     setIsDone(false);
 

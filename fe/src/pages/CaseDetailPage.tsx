@@ -130,29 +130,47 @@ export const CaseDetailPage: React.FC = () => {
     (tableName: string) => {
       setSqlQuery(`SELECT * FROM ${tableName} LIMIT 10;\n`);
       setActiveWorkbenchTab('result');
-      toast.success(`Generated query template for "${tableName}"`);
+      toast.success(
+        lang === 'VI'
+          ? `Đã tạo câu lệnh mẫu cho "${tableName}"`
+          : `Generated query template for "${tableName}"`
+      );
     },
-    [setSqlQuery]
+    [setSqlQuery, lang]
   );
 
   const handleInsertColumnName = useCallback(
     (columnName: string) => {
       setSqlQuery(sqlQuery ? `${sqlQuery} ${columnName}` : columnName);
-      toast.success(`Inserted "${columnName}" into query`);
+      toast.success(
+        lang === 'VI'
+          ? `Đã chèn cột "${columnName}" vào câu lệnh`
+          : `Inserted "${columnName}" into query`
+      );
     },
-    [sqlQuery, setSqlQuery]
+    [sqlQuery, setSqlQuery, lang]
   );
 
   // Catch subscription errors from API (403 or 404 SubscriptionNotPurchased)
-  useEffect(() => {
-    if (caseError) {
-      const status = (caseError as { response?: { status?: number; data?: { message?: string } } })?.response?.status;
-      const msg = (caseError as { response?: { data?: { message?: string } } })?.response?.data?.message || '';
-      if (status === 403 || (status === 404 && msg.toLowerCase().includes('subcription'))) {
-        setShowSubscribeModal(true);
-      }
-    }
+  const isPaywallError = useMemo(() => {
+    if (!caseError) return false;
+    const status = (caseError as { response?: { status?: number; data?: { message?: string } } })?.response?.status;
+    const msg = (caseError as { response?: { data?: { message?: string } } })?.response?.data?.message || '';
+    return status === 403 || (status === 404 && (msg.toLowerCase().includes('subcription') || msg.toLowerCase().includes('subscription')));
   }, [caseError]);
+
+  const isNotFoundError = useMemo(() => {
+    if (isNaN(caseId)) return true;
+    if (!caseError || isPaywallError) return false;
+    const status = (caseError as { response?: { status?: number } })?.response?.status;
+    return status === 404;
+  }, [caseId, caseError, isPaywallError]);
+
+  useEffect(() => {
+    if (isPaywallError) {
+      setShowSubscribeModal(true);
+    }
+  }, [isPaywallError]);
 
   const questions = useMemo(() => caseData?.caseQuestionDTOList || [], [caseData]);
   const currentQuestion = questions[currentQuestionIndex];
@@ -178,7 +196,11 @@ export const CaseDetailPage: React.FC = () => {
   // Run SQL query
   const handleRunQuery = useCallback(async () => {
     if (!sqlQuery.trim()) {
-      toast.error('Please enter an SQL query before executing');
+      toast.error(
+        lang === 'VI'
+          ? 'Vui lòng nhập câu lệnh SQL trước khi thực thi'
+          : 'Please enter an SQL query before executing'
+      );
       return;
     }
 
@@ -214,14 +236,23 @@ export const CaseDetailPage: React.FC = () => {
       ]);
 
       if (rows.length === 0) {
-        toast('No records matched your search criteria.', { icon: '🔍' });
+        toast(
+          lang === 'VI'
+            ? 'Không có bản ghi nào khớp với điều kiện truy vấn.'
+            : 'No records matched your search criteria.',
+          { icon: '🔍' }
+        );
       } else {
-        toast.success(`Successfully retrieved ${rows.length} forensic rows!`);
+        toast.success(
+          lang === 'VI'
+            ? `Đã trích xuất thành công ${rows.length} dòng dữ liệu!`
+            : `Successfully retrieved ${rows.length} forensic rows!`
+        );
       }
     } catch (err: unknown) {
       const errorMsg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'SQL query execution error';
+        (lang === 'VI' ? 'Lỗi thực thi câu lệnh SQL' : 'SQL query execution error');
       setQueryResult(null, errorMsg);
       setActiveWorkbenchTab('result');
 
@@ -241,11 +272,15 @@ export const CaseDetailPage: React.FC = () => {
         ...prev.slice(0, 29),
       ]);
 
-      toast.error('Query failed. View error log in the transcript below.');
+      toast.error(
+        lang === 'VI'
+          ? 'Truy vấn thất bại. Xem chi tiết lỗi ở bảng kết quả bên dưới.'
+          : 'Query failed. View error log in the transcript below.'
+      );
     } finally {
       setQueryRunning(false);
     }
-  }, [sqlQuery, caseId, setQueryRunning, incrementAttempts, setQueryResult, currentQuestion]);
+  }, [sqlQuery, caseId, setQueryRunning, incrementAttempts, setQueryResult, currentQuestion, lang]);
 
   // Reveal Hint via backend API for anti-cheat tracking
   const handleRevealHint = useCallback(
@@ -263,29 +298,41 @@ export const CaseDetailPage: React.FC = () => {
           [`${currentQuestion.id}-${hintNumber}`]: res.hintText,
         }));
         revealHint(hintNumber);
-        toast.success(`Unlocked Envelope ${hintNumber}! (-20% score penalty applied)`);
+        toast.success(
+          lang === 'VI'
+            ? `Đã mở Hồ sơ mật #${hintNumber}! (Trừ 20% điểm thưởng)`
+            : `Unlocked Envelope ${hintNumber}! (-20% score penalty applied)`
+        );
       } catch (err: unknown) {
         const errorMsg =
           (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          'Failed to unlock clue. Please check network connection.';
+          (lang === 'VI'
+            ? 'Không thể mở gợi ý. Vui lòng kiểm tra kết nối mạng.'
+            : 'Failed to unlock clue. Please check network connection.');
         toast.error(errorMsg);
       } finally {
         setIsUnlockingHint(false);
       }
     },
-    [revealedHints, currentQuestion, caseId, isUnlockingHint, revealHint]
+    [revealedHints, currentQuestion, caseId, isUnlockingHint, revealHint, lang]
   );
 
   // Submit Answer
   const handleSubmitAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!answerInput.trim()) {
-      toast.error('Please enter the forensic evidence value before submitting');
+      toast.error(
+        lang === 'VI'
+          ? 'Vui lòng nhập kết quả điều tra trước khi nộp bài'
+          : 'Please enter the forensic evidence value before submitting'
+      );
       return;
     }
 
     if (!currentQuestion) {
-      toast.error('Question details not found');
+      toast.error(
+        lang === 'VI' ? 'Không tìm thấy thông tin câu hỏi' : 'Question details not found'
+      );
       return;
     }
 
@@ -305,16 +352,27 @@ export const CaseDetailPage: React.FC = () => {
         await refetchProgress();
         await refreshProfile();
       } else if (res.message === 'Already completed') {
-        toast.success('You have already solved this lead previously!');
+        toast.success(
+          lang === 'VI'
+            ? 'Bạn đã giải thành công đầu mối này trước đó!'
+            : 'You have already solved this lead previously!'
+        );
       } else {
-        toast.error('Submitted evidence is incorrect! Inspect your query results again.', {
-          icon: '❌',
-        });
+        toast.error(
+          lang === 'VI'
+            ? 'Bằng chứng nộp lên chưa chính xác! Hãy kiểm tra lại kết quả truy vấn.'
+            : 'Submitted evidence is incorrect! Inspect your query results again.',
+          {
+            icon: '❌',
+          }
+        );
       }
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        'Error submitting evidence verification';
+        (lang === 'VI'
+          ? 'Lỗi xác thực bằng chứng'
+          : 'Error submitting evidence verification');
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -340,7 +398,14 @@ export const CaseDetailPage: React.FC = () => {
     return (
       <PageWrapper fullWidth>
         <div className="h-[70vh] flex items-center justify-center">
-          <Spinner size="lg" label="DECIPHERING CRIME CASE DOSSIER..." />
+          <Spinner
+            size="lg"
+            label={
+              lang === 'VI'
+                ? 'ĐANG GIẢI MÃ HỒ SƠ VỤ ÁN...'
+                : 'DECIPHERING CRIME CASE DOSSIER...'
+            }
+          />
         </div>
       </PageWrapper>
     );
@@ -351,18 +416,67 @@ export const CaseDetailPage: React.FC = () => {
       <PageWrapper>
         <div className="max-w-lg mx-auto bg-noir-paper border-2 border-noir-borderDark rounded-[4px] p-8 text-center my-12 shadow-noir-lift">
           <AlertCircle className="w-12 h-12 text-noir-blood mx-auto mb-3" />
-          <h2 className="text-xl font-display font-bold text-noir-ink mb-2 uppercase">Access Restricted • Classified Dossier</h2>
-          <p className="text-xs font-serif italic text-noir-inkMuted mb-6">
-            This investigation file is strictly classified or requires Special Investigator clearance (Premium).
-          </p>
-          <div className="flex gap-3 justify-center">
-            <Button variant="secondary" onClick={() => navigate('/cases')}>
-              Return to Case Files
-            </Button>
-            <Button variant="gold" onClick={() => setShowSubscribeModal(true)}>
-              Issue Clearance Now
-            </Button>
-          </div>
+          {isPaywallError ? (
+            <>
+              <h2 className="text-xl font-display font-bold text-noir-ink mb-2 uppercase">
+                {lang === 'VI'
+                  ? 'Quyền Truy Cập Hạn Chế • Hồ Sơ Tuyệt Mật'
+                  : 'Access Restricted • Classified Dossier'}
+              </h2>
+              <p className="text-xs font-serif italic text-noir-inkMuted mb-6">
+                {lang === 'VI'
+                  ? 'Hồ sơ điều tra này thuộc diện tuyệt mật và yêu cầu thẩm quyền Đặc Vụ Cao Cấp (Premium).'
+                  : 'This investigation file is strictly classified or requires Special Investigator clearance (Premium).'}
+              </p>
+              <div className="flex gap-3 justify-center flex-wrap">
+                <Button variant="secondary" onClick={() => navigate('/cases')}>
+                  {lang === 'VI' ? 'Quay Lại Danh Sách Án' : 'Return to Case Files'}
+                </Button>
+                <Button variant="gold" onClick={() => setShowSubscribeModal(true)}>
+                  {lang === 'VI' ? 'Nâng Cấp Thẩm Quyền' : 'Issue Clearance Now'}
+                </Button>
+              </div>
+            </>
+          ) : isNotFoundError ? (
+            <>
+              <h2 className="text-xl font-display font-bold text-noir-ink mb-2 uppercase">
+                {lang === 'VI'
+                  ? 'Không Tìm Thấy Hồ Sơ Vụ Án'
+                  : 'Case Dossier Not Found'}
+              </h2>
+              <p className="text-xs font-serif italic text-noir-inkMuted mb-6">
+                {lang === 'VI'
+                  ? 'Mã hồ sơ vụ án không tồn tại trong kho lưu trữ hoặc đã bị niêm phong.'
+                  : 'The requested case file ID does not exist in the archives or has been expunged.'}
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button variant="gold" onClick={() => navigate('/cases')}>
+                  {lang === 'VI' ? 'Quay Lại Danh Sách Án' : 'Return to Case Files'}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-display font-bold text-noir-ink mb-2 uppercase">
+                {lang === 'VI'
+                  ? 'Lỗi Tải Hồ Sơ Vụ Án'
+                  : 'Failed to Load Case Dossier'}
+              </h2>
+              <p className="text-xs font-serif italic text-noir-inkMuted mb-6">
+                {lang === 'VI'
+                  ? 'Không thể kết nối tới máy chủ lưu trữ hồ sơ. Vui lòng kiểm tra kết nối và thử lại.'
+                  : 'Unable to reach the forensic archive server. Please check your connection and try again.'}
+              </p>
+              <div className="flex gap-3 justify-center flex-wrap">
+                <Button variant="secondary" onClick={() => navigate('/cases')}>
+                  {lang === 'VI' ? 'Quay Lại Danh Sách Án' : 'Return to Case Files'}
+                </Button>
+                <Button variant="gold" onClick={() => refetchCase()}>
+                  {lang === 'VI' ? 'Thử Lại' : 'Retry'}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
 
         <SubscribeModal

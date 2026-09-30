@@ -390,7 +390,7 @@ export const EvidenceBoard: React.FC<EvidenceBoardProps> = ({
                             {col.sampleValues && (
                               <span
                                 className="hidden sm:inline text-[9px] text-noir-inkFaint italic max-w-[120px] truncate"
-                                title={`Ví dụ: ${col.sampleValues}`}
+                                title={lang === 'VI' ? `Ví dụ: ${col.sampleValues}` : `Sample: ${col.sampleValues}`}
                               >
                                 {col.sampleValues}
                               </span>

@@ -236,7 +236,7 @@ export const TableSchemaViewer: React.FC<TableSchemaViewerProps> = ({
                                   {col.isPrimaryKey && (
                                     <span
                                       className="inline-flex items-center gap-0.5 bg-noir-candle/20 border border-noir-candleDark text-noir-candleDark px-1 py-0.5 rounded text-[9px] font-typewriter font-black tracking-tighter"
-                                      title="Primary Key (Khóa chính)"
+                                      title={lang === 'VI' ? 'Khóa chính (Primary Key)' : 'Primary Key'}
                                     >
                                       <Key className="w-2.5 h-2.5" /> PK
                                     </span>
@@ -282,11 +282,12 @@ export const TableSchemaViewer: React.FC<TableSchemaViewerProps> = ({
                               <td className="py-2 px-2 align-top text-right whitespace-nowrap">
                                 <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100">
                                   <button
+                                    type="button"
                                     onClick={() =>
                                       handleCopy(
                                         col.columnName,
                                         `col-${table.tableName}-${col.columnName}`,
-                                        'column name'
+                                        lang === 'VI' ? 'tên cột' : 'column name'
                                       )
                                     }
                                     className="p-1 rounded hover:bg-noir-card border border-transparent hover:border-noir-borderDark text-noir-inkMuted hover:text-noir-ink transition-colors"

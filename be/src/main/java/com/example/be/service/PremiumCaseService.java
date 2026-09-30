@@ -84,11 +84,10 @@ public class PremiumCaseService {
 
     @Cacheable(
             cacheNames = "premiumCases",
-            key = "(T(com.example.be.util.SecurityUtil).getCurrentUserOrNull() != null && Boolean.TRUE.equals(T(com.example.be.util.SecurityUtil).getCurrentUserOrNull().getIsPurchased())) + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort"
+            key = "T(com.example.be.util.SecurityUtil).isCurrentUserPurchased() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort"
     )
     public PremiumCaseListResponse getPremiumCases(Pageable pageable) {
-        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUserOrNull();
-        boolean isPurchased = customUserDetail != null && Boolean.TRUE.equals(customUserDetail.getIsPurchased());
+        boolean isPurchased = SecurityUtil.isCurrentUserPurchased();
         Page<PremiumCase> pageResult = premiumCaseRepository.findAll(pageable);
         List<PremiumCaseDTO> content = pageResult.getContent().stream().map(
                         premiumCase -> PremiumCaseDTO.builder()

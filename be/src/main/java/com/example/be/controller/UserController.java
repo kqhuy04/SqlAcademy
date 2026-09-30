@@ -1,6 +1,7 @@
 package com.example.be.controller;
 
 import com.example.be.annotation.Idempotent;
+import com.example.be.annotation.ImageValid;
 import com.example.be.dto.request.ChangePasswordRequest;
 import com.example.be.dto.request.ChangeUsernameRequest;
 import com.example.be.dto.request.DeleteUserRequest;
@@ -10,6 +11,7 @@ import com.example.be.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -56,6 +58,11 @@ public class UserController {
     @PatchMapping("/me/username")
     public ResponseEntity<ChangeUsernameResponse> changeUsername(@Valid @RequestBody ChangeUsernameRequest changeUsernameRequest) {
         return ResponseEntity.ok(userService.changeUsername(changeUsernameRequest));
+    }
+
+    @PostMapping("/me/avatar")
+    public ResponseEntity<UploadAvatarResponse> uploadAvatar(@ImageValid @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(userService.uploadAvatar(file));
     }
 
 }

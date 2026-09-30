@@ -30,4 +30,9 @@ public class SecurityUtil {
         }
         return null;
     }
+
+    public static boolean isCurrentUserPurchased() {
+        CustomUserDetail user = getCurrentUserOrNull();
+        return user != null && Boolean.TRUE.equals(user.getIsPurchased());
+    }
 }

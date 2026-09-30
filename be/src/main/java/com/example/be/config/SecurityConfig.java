@@ -56,6 +56,8 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/api/v1/payments/webhook/**", "/actuator/health/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/premium_cases").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/users/leaderboard").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/v1/posts/me", "/api/v1/posts/bookmarks").authenticated()
+                                .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/*", "/api/v1/posts/*/comments", "/api/v1/tags").permitAll()
                                 .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
                         .decoder(jwtDecoder)

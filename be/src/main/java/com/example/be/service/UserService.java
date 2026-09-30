@@ -1,5 +1,8 @@
 package com.example.be.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import com.example.be.config.CloudinaryConfig;
 import com.example.be.dto.CustomUserDetail;
 import com.example.be.dto.LeaderboardProjection;
 import com.example.be.dto.request.*;
@@ -16,7 +19,6 @@ import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import org.jspecify.annotations.Nullable;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -24,9 +26,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -46,6 +51,8 @@ public class UserService implements UserDetailsService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
+    private final Cloudinary cloudinary;
+
     UserService(UserRepository userRepository,
                 TokenUtil tokenUtil,
                 PasswordEncoder passwordEncoder,
@@ -57,7 +64,8 @@ public class UserService implements UserDetailsService {
                 UserCaseProgressRepository userCaseProgressRepository,
                 PasswordResetTokenRepository passwordResetTokenRepository,
                 GoogleAuthService googleAuthService,
-                RedisTemplate<String, Object> redisTemplate) {
+                RedisTemplate<String, Object> redisTemplate,
+                Cloudinary cloudinary) {
 
         this.userRepository = userRepository;
         this.tokenUtil = tokenUtil;
@@ -71,6 +79,7 @@ public class UserService implements UserDetailsService {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.googleAuthService = googleAuthService;
         this.redisTemplate = redisTemplate;
+        this.cloudinary = cloudinary;
     }
 
     @Transactional
@@ -208,7 +217,6 @@ public class UserService implements UserDetailsService {
     }
 
     public List<LeaderboardEntryResponse> getLeaderboard() {
-        //System.out.println(">>> [DEBUG] ĐANG TRUY VẤN DATABASE MYSQL ĐỂ TÍNH ĐIỂM...");
         List<LeaderboardProjection> topUsers = userRepository.getTopLeaderboard(50);
         int[] rank = {1};
         return topUsers.stream()
@@ -299,5 +307,30 @@ public class UserService implements UserDetailsService {
         }
         return candidate;
     }
+
+    public UploadAvatarResponse uploadAvatar(MultipartFile file) {
+        CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
+        try {
+            Map<String,Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "folder", "avatars",
+                    "public_id", "user_" + customUserDetail.getUserId().toString(),
+                    "overwrite", true
+            ));
+            if (uploadResult == null) {
+                throw new RuntimeException("Failed to upload avatar");
+            }
+            User user = userRepository.findById(customUserDetail.getUserId()).orElseThrow(() -> new UserNotFoundException("User not found"));
+            String imageUrl = (String) uploadResult.get("secure_url");
+            if (imageUrl == null || imageUrl.equals("")) {
+                throw new RuntimeException("Failed to upload avatar");
+            }
+            user.setAvatarUrl(imageUrl);
+            userRepository.save(user);
+            return new UploadAvatarResponse("Success");
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload avatar");
+        }
+    }
+
 
 }

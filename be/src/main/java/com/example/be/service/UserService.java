@@ -19,6 +19,7 @@ import com.example.be.util.SecurityUtil;
 import com.example.be.util.TokenUtil;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import org.jspecify.annotations.Nullable;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -216,6 +217,7 @@ public class UserService implements UserDetailsService {
         )).toList();
     }
 
+    @Cacheable(cacheNames = "leaderboard")
     public List<LeaderboardEntryResponse> getLeaderboard() {
         List<LeaderboardProjection> topUsers = userRepository.getTopLeaderboard(50);
         int[] rank = {1};

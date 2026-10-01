@@ -4,6 +4,7 @@ import com.example.be.entity.User;
 import com.example.be.entity.UserEvent;
 import com.example.be.enums.UserEventType;
 import com.example.be.repository.UserEventRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,12 +16,14 @@ public class UserEventService {
         this.userEventRepository = userEventRepository;
     }
 
+    @Async
     public void logEvent(User user, UserEventType userEventType, String metadata) {
         Long caseId = extractLongParam(metadata, "caseId=");
         Long questionId = extractLongParam(metadata, "questionId=");
         logEvent(user, userEventType, caseId, questionId, metadata);
     }
 
+    @Async
     public void logEvent(User user, UserEventType userEventType, Long caseId, Long questionId, String metadata) {
         UserEvent userEvent = UserEvent.builder()
                 .user(user)

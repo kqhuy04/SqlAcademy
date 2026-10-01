@@ -27,6 +27,8 @@ public class SandboxDataSourceConfig {
         dataSource.setPassword(password);
         dataSource.setMaximumPoolSize(maxPoolSize);
         dataSource.setPoolName("Sandbox-HikariPool");
+        dataSource.setConnectionTimeout(3000);
+        dataSource.setLeakDetectionThreshold(5000);
         return dataSource;
     }
 }

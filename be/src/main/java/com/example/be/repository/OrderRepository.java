@@ -5,6 +5,7 @@ import com.example.be.enums.OrderStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,5 +20,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o WHERE o.orderCode = :orderCode")
     Optional<Order> findByOrderCodeWithLock(@Param("orderCode") Long orderCode);
 
+    @Modifying
+    @Query("UPDATE Order o SET o.status = :newStatus WHERE o.status = :oldStatus AND o.expiredAt < :now")
+    int updateExpiredOrders(@Param("newStatus") OrderStatus newStatus,
+                            @Param("oldStatus") OrderStatus oldStatus,
+                            @Param("now") LocalDateTime now);
     List<Order> findByStatusAndExpiredAtBefore(OrderStatus orderStatus, LocalDateTime now);
 }

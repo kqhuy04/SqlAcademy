@@ -27,6 +27,13 @@ public interface UserEventRepository extends JpaRepository<UserEvent, Long> {
             @Param("metaPrefix") String metaPrefix
     );
 
+    @Query("SELECT u.metadata FROM UserEvent u WHERE u.user.id = :userId AND u.userEventType = :eventType AND u.caseId = :caseId")
+    List<String> findMetadataByUserIdAndTypeAndCaseId(
+            @Param("userId") Long userId,
+            @Param("eventType") UserEventType eventType,
+            @Param("caseId") Long caseId
+    );
+
     @Modifying
     @Query("DELETE FROM UserEvent u where u.user.id = :userId")
     void deleteByUserId(@Param("userId") Long userId);

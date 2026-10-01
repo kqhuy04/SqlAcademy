@@ -121,9 +121,8 @@ public class PremiumCaseService {
         PremiumCase premiumCase = premiumCaseRepository.findById(id).orElseThrow(() -> new PremiumCaseNotFoundException("Premium Case not found"));
         List<CaseQuestion> caseQuestionList = caseQuestionRepository.findByPremiumCaseId(premiumCase.getId());
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
-        String prefix = "caseId=" + premiumCase.getId() + ",%";
         List<String> unlockedEventMetas = userEventRepository
-                .findMetadataByUserIdAndTypeAndPrefix(customUserDetail.getUserId(), UserEventType.HINT_USED, prefix);
+                .findMetadataByUserIdAndTypeAndCaseId(customUserDetail.getUserId(), UserEventType.HINT_USED, premiumCase.getId());
         Set<String> unlockedHintsSet = new HashSet<>(unlockedEventMetas != null ? unlockedEventMetas : List.of());
 
         List<CaseQuestionDTO> list = caseQuestionList.stream().map(
@@ -285,7 +284,6 @@ public class PremiumCaseService {
                             rows.add(row);
                         }
                         SQLQueryResponse response = new SQLQueryResponse(rows);
-                        // 5. Lưu vào Redis với TTL 30 phút
                         redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(30));
                         return response;
                     }

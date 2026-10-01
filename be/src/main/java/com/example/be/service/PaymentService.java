@@ -133,10 +133,6 @@ public class PaymentService {
     @Scheduled(fixedRate = 300000)
     @Transactional
     public void expiredOrder() {
-        List<Order> expiredOrders = orderRepository.findByStatusAndExpiredAtBefore(OrderStatus.PENDING, LocalDateTime.now());
-        for (Order order : expiredOrders) {
-            order.setStatus(OrderStatus.EXPIRED);
-        }
-        orderRepository.saveAll(expiredOrders);
+        orderRepository.updateExpiredOrders(OrderStatus.EXPIRED, OrderStatus.PENDING, LocalDateTime.now());
     }
 }

@@ -37,7 +37,7 @@ public class IdempotentImp {
             CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
             userIdentifier = "User:" + customUserDetail.getUserId();
         } catch (Exception e) {
-            userIdentifier = "IP:" + request.getRemoteAddr();
+            userIdentifier = "IP:" + getClientIp(request);
         }
 
         String key = "Task:" + userIdentifier + ":" + uri + ":" + Arrays.deepHashCode(joinPoint.getArgs());
@@ -48,12 +48,17 @@ public class IdempotentImp {
         }
 
         try {
-            Object response = joinPoint.proceed();
-
-            return response;
-        } catch (Throwable e) {
+            return joinPoint.proceed();
+        } finally {
             idempotencyService.remove(key);
-            throw e;
         }
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader != null && !xfHeader.isBlank() && !"unknown".equalsIgnoreCase(xfHeader)) {
+            return xfHeader.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

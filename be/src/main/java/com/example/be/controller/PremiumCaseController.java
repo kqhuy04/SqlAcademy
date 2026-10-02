@@ -38,7 +38,6 @@ public class PremiumCaseController {
         return ResponseEntity.ok(premiumCaseService.getPremiumCase(id));
     }
 
-    @Idempotent
     @PostMapping("/premium_cases/run")
     public ResponseEntity<SQLQueryResponse> runQuery(@RequestBody @Valid SQLQueryRequest sqlQueryRequest) {
         return ResponseEntity.ok(premiumCaseService.runQuery(sqlQueryRequest));

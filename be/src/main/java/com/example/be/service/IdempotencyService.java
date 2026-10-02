@@ -1,18 +1,16 @@
 package com.example.be.service;
 
-import com.example.be.annotationImp.IdempotencyRecord;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class IdempotencyService {
-    private final ConcurrentHashMap<String, IdempotencyRecord> lockMap = new ConcurrentHashMap<>();
+
     private final RedisTemplate<String, Object> redisTemplate;
 
-    IdempotencyService(RedisTemplate redisTemplate) {
+    public IdempotencyService(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
@@ -20,10 +18,7 @@ public class IdempotencyService {
         Boolean isNew = redisTemplate.opsForValue().setIfAbsent(key, "PROCESSING",
                 Duration.ofSeconds(timeoutProcessing)
                 );
-        if (Boolean.TRUE.equals(isNew)) {
-            return true;
-        }
-        return false;
+        return Boolean.TRUE.equals(isNew);
     }
 
     public void remove(String key) {

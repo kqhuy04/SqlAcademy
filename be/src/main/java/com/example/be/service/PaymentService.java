@@ -20,6 +20,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -36,14 +37,14 @@ public class PaymentService {
     private final PaymentStrategyFactory strategyFactory;
     private final UserEventService userEventService;
     private final TokenUtil tokenUtil;
-    private final RedisTemplate redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     public PaymentService(OrderRepository orderRepository,
                           PaymentTransactionRepository transactionRepository,
                           UserRepository userRepository,
                           PaymentStrategyFactory strategyFactory,
                           UserEventService userEventService,
                           TokenUtil tokenUtil,
-                          RedisTemplate redisTemplate) {
+                          RedisTemplate<String, Object> redisTemplate) {
         this.orderRepository = orderRepository;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
@@ -53,11 +54,14 @@ public class PaymentService {
         this.redisTemplate = redisTemplate;
     }
 
-    @Transactional
     public String createOrder(PaymentGateway gateway) {
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
         User user = userRepository.findById(customUserDetail.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (user.getPremiumPurchasedAt() != null) {
+            throw new BadRequestException("User has already purchased lifetime premium!");
+        }
 
         long orderCode = System.currentTimeMillis() % 10000000000L + ThreadLocalRandom.current().nextInt(1000, 9999);
         BigDecimal amount = (gateway == PaymentGateway.VNPAY) ? new BigDecimal("99000") : new BigDecimal("4.99");

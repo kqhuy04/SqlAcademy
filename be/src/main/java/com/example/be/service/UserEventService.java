@@ -25,8 +25,9 @@ public class UserEventService {
 
     @Async
     public void logEvent(User user, UserEventType userEventType, Long caseId, Long questionId, String metadata) {
+        User userRef = User.builder().id(user.getId()).build();
         UserEvent userEvent = UserEvent.builder()
-                .user(user)
+                .user(userRef)
                 .userEventType(userEventType)
                 .caseId(caseId)
                 .questionId(questionId)

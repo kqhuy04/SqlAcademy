@@ -27,6 +27,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -53,6 +54,7 @@ public class UserService implements UserDetailsService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final Cloudinary cloudinary;
+    private final TransactionTemplate transactionTemplate;
 
     UserService(UserRepository userRepository,
                 TokenUtil tokenUtil,
@@ -66,7 +68,8 @@ public class UserService implements UserDetailsService {
                 PasswordResetTokenRepository passwordResetTokenRepository,
                 GoogleAuthService googleAuthService,
                 RedisTemplate<String, Object> redisTemplate,
-                Cloudinary cloudinary) {
+                Cloudinary cloudinary,
+                TransactionTemplate transactionTemplate) {
 
         this.userRepository = userRepository;
         this.tokenUtil = tokenUtil;
@@ -81,6 +84,7 @@ public class UserService implements UserDetailsService {
         this.googleAuthService = googleAuthService;
         this.redisTemplate = redisTemplate;
         this.cloudinary = cloudinary;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Transactional
@@ -126,8 +130,7 @@ public class UserService implements UserDetailsService {
             user.setPasswordHash(passwordEncoder.encode(changePasswordRequest.newPassword()));
             userRepository.save(user);
 
-            List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(user.getId());
-            refreshTokenList.stream().forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
+            refreshTokenRepository.deleteByUserId(user.getId());
 
             String accessToken = tokenUtil.generateAccessToken(new CustomUserDetail(user.getUsername(), user.getRole(), user.getId(), user.getPremiumPurchasedAt() != null));
             String refreshToken = refreshTokenService.generateRefreshToken(user);
@@ -166,8 +169,7 @@ public class UserService implements UserDetailsService {
             user.setPasswordHash(passwordEncoder.encode(resetPasswordRequest.newPassword()));
             userRepository.save(user);
 
-            List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(user.getId());
-            refreshTokenList.stream().forEach(refreshToken -> refreshTokenRepository.delete(refreshToken));
+            refreshTokenRepository.deleteByUserId(user.getId());
             userEventService.logEvent(user, UserEventType.RESET_PASSWORD, "");
 
             return new ResetPasswordResponse("You change to new password successfully");
@@ -186,8 +188,7 @@ public class UserService implements UserDetailsService {
         }
         Long id = user.getId();
         userCaseProgressRepository.deleteByUserId(id);
-        List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserId(id);
-        refreshTokenList.forEach(refreshTokenRepository::delete);
+        refreshTokenRepository.deleteByUserId(id);
         userEventRepository.deleteByUserId(id);
         userRepository.delete(user);
         return new DeleteUserResponse("Account deleted successfully");
@@ -249,7 +250,6 @@ public class UserService implements UserDetailsService {
         return null;
     }
 
-    @Transactional
     public LoginResponse loginWithGoogle(GoogleLoginRequest googleLoginRequest) {
         GoogleIdToken.Payload payload = googleAuthService.verifyToken(googleLoginRequest.idToken());
 
@@ -257,43 +257,44 @@ public class UserService implements UserDetailsService {
         String email = payload.getEmail();
         String name = (String) payload.get("name");
         String pictureUrl = (String) payload.get("picture");
-
-        User user = userRepository.findByEmail(email).map(existingUser -> {
-            if (existingUser.getProviderId() == null) {
-                existingUser.setAuthProvider(AuthProvider.GOOGLE);
-                existingUser.setProviderId(googleSubId);
-                if (existingUser.getAvatarUrl() == null) {
-                    existingUser.setAvatarUrl(pictureUrl);
+        return transactionTemplate.execute(status -> {
+            User user = userRepository.findByEmail(email).map(existingUser -> {
+                if (existingUser.getProviderId() == null) {
+                    existingUser.setAuthProvider(AuthProvider.GOOGLE);
+                    existingUser.setProviderId(googleSubId);
+                    if (existingUser.getAvatarUrl() == null) {
+                        existingUser.setAvatarUrl(pictureUrl);
+                    }
+                    return userRepository.save(existingUser);
                 }
-                return userRepository.save(existingUser);
-            }
-            return existingUser;
-        }).orElseGet(() -> {
-            String uniqueUsername = generateUniqueUsername(email);
-            User newUser = User.builder()
-                    .email(email)
-                    .username(uniqueUsername)
-                    .passwordHash(null)
-                    .authProvider(AuthProvider.GOOGLE)
-                    .providerId(googleSubId)
-                    .avatarUrl(pictureUrl)
-                    .role(Role.ROLE_USER)
-                    .totalScore(0)
-                    .build();
-            User savedUser = userRepository.save(newUser);
-            userEventService.logEvent(savedUser, UserEventType.ACCOUNT_CREATED, "Registered via Google OAuth");
-            return savedUser;
+                return existingUser;
+            }).orElseGet(() -> {
+                String uniqueUsername = generateUniqueUsername(email);
+                User newUser = User.builder()
+                        .email(email)
+                        .username(uniqueUsername)
+                        .passwordHash(null)
+                        .authProvider(AuthProvider.GOOGLE)
+                        .providerId(googleSubId)
+                        .avatarUrl(pictureUrl)
+                        .role(Role.ROLE_USER)
+                        .totalScore(0)
+                        .build();
+                User savedUser = userRepository.save(newUser);
+                userEventService.logEvent(savedUser, UserEventType.ACCOUNT_CREATED, "Registered via Google OAuth");
+                return savedUser;
+            });
+            CustomUserDetail userDetails = new CustomUserDetail(
+                    user.getUsername(),
+                    user.getRole(),
+                    user.getId(),
+                    user.getPremiumPurchasedAt() != null
+            );
+            String accessToken = tokenUtil.generateAccessToken(userDetails);
+            String refreshToken = refreshTokenService.generateRefreshToken(user);
+            userEventService.logEvent(user, UserEventType.LOGIN, "Logged in via Google OAuth");
+            return new LoginResponse(accessToken, refreshToken, UserProfileResponse.from(user));
         });
-        CustomUserDetail userDetails = new CustomUserDetail(
-                user.getUsername(),
-                user.getRole(),
-                user.getId(),
-                user.getPremiumPurchasedAt() != null
-        );
-        String accessToken = tokenUtil.generateAccessToken(userDetails);
-        String refreshToken = refreshTokenService.generateRefreshToken(user);
-        userEventService.logEvent(user, UserEventType.LOGIN, "Logged in via Google OAuth");
-        return new LoginResponse(accessToken, refreshToken, UserProfileResponse.from(user));
     }
     private String generateUniqueUsername(String email) {
         String baseName = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");

@@ -12,7 +12,9 @@ import javax.crypto.spec.SecretKeySpec;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Slf4j
@@ -57,15 +59,14 @@ public class VnPayGateway implements PaymentGatewayStrategy {
             vnpParams.put("vnp_ReturnUrl", returnUrl + "?orderCode=" + order.getOrderCode());
             vnpParams.put("vnp_IpAddr", "127.0.0.1");
 
-            // Format ngày giờ: yyyyMMddHHmmss
-            Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-            String vnpCreateDate = formatter.format(cld.getTime());
+            // Format ngày giờ: yyyyMMddHHmmss theo múi giờ chuẩn Việt Nam (Asia/Ho_Chi_Minh = GMT+7)
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+            String vnpCreateDate = now.format(formatter);
             vnpParams.put("vnp_CreateDate", vnpCreateDate);
 
             // Thời hạn thanh toán: 15 phút
-            cld.add(Calendar.MINUTE, 15);
-            String vnpExpireDate = formatter.format(cld.getTime());
+            String vnpExpireDate = now.plusMinutes(15).format(formatter);
             vnpParams.put("vnp_ExpireDate", vnpExpireDate);
 
             // 1. Sắp xếp các tham số theo bảng chữ cái A-Z

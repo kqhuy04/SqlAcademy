@@ -12,6 +12,9 @@ import java.util.Date;
 @Component
 public class TokenUtil {
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final Base64.Encoder BASE64_ENCODER = Base64.getUrlEncoder().withoutPadding();
+
     private final JwtConfig jwtConfig;
 
     public TokenUtil(JwtConfig jwtConfig) {
@@ -31,9 +34,8 @@ public class TokenUtil {
     }
 
     public String generateRefreshToken() {
-        SecureRandom secureRandom = new SecureRandom();
         byte[] randomBytes = new byte[64];
-        secureRandom.nextBytes(randomBytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        SECURE_RANDOM.nextBytes(randomBytes);
+        return BASE64_ENCODER.encodeToString(randomBytes);
     }
 }

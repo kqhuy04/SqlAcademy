@@ -17,9 +17,9 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
 
     private final UserRepository userRepository;
 
-    private final RedisTemplate redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public CustomJwtAuthenticationConverter(UserRepository userRepository, RedisTemplate redisTemplate) {
+    public CustomJwtAuthenticationConverter(UserRepository userRepository, RedisTemplate<String, Object> redisTemplate) {
         this.userRepository = userRepository;
         this.redisTemplate = redisTemplate;
     }
@@ -30,12 +30,18 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
         Long userId = jwt.getClaim("userId");
         String role = jwt.getClaim("role");
 
-        Boolean isPurchased = (Boolean) redisTemplate.opsForValue().get("isPurchased:%s".formatted(userId));
-        if (isPurchased == null) {
-            isPurchased = userRepository.findById(userId)
-                    .map(user -> user.getPremiumPurchasedAt() != null)
-                    .orElse(Boolean.FALSE);
-            redisTemplate.opsForValue().set("isPurchased:%s".formatted(userId), isPurchased, Duration.ofMinutes(10));
+        Boolean jwtIsPurchased = jwt.getClaim("isPurchased");
+        Boolean isPurchased;
+        if (Boolean.TRUE.equals(jwtIsPurchased)) {
+            isPurchased = Boolean.TRUE;
+        } else {
+            isPurchased = (Boolean) redisTemplate.opsForValue().get("isPurchased:%s".formatted(userId));
+            if (isPurchased == null) {
+                isPurchased = userRepository.findById(userId)
+                        .map(user -> user.getPremiumPurchasedAt() != null)
+                        .orElse(Boolean.FALSE);
+                redisTemplate.opsForValue().set("isPurchased:%s".formatted(userId), isPurchased, Duration.ofMinutes(10));
+            }
         }
 
         CustomUserDetail principal = new CustomUserDetail(username, Role.valueOf(role), userId, isPurchased);

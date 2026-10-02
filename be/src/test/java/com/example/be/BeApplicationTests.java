@@ -24,15 +24,13 @@ class BeApplicationTests {
 
     @Test
     void testCacheLeaderboard() {
-        System.out.println("UserService class: " + userService.getClass().getName());
-        System.out.println("CacheManager class: " + cacheManager.getClass().getName());
-        var cache = cacheManager.getCache("leaderboard");
-        var entryBefore = (cache != null && cache.get("top50") != null) ? cache.get("top50").get() : "null";
-        System.out.println("Cache entry before: " + entryBefore);
+        var lbKeys = redisTemplate.keys("leaderboard*");
+        if (lbKeys != null && !lbKeys.isEmpty()) {
+            redisTemplate.delete(lbKeys);
+        }
 
-        System.out.println("================ LẦN GỌI 1 ================");
         var list1 = userService.getLeaderboard();
-        System.out.println("Lấy được: " + list1.size() + " học viên.");
+        org.junit.jupiter.api.Assertions.assertNotNull(list1);
     }
 
     @Autowired

@@ -67,7 +67,7 @@ public class PremiumCaseService {
                        @Qualifier("sandboxDataSource") DataSource sandboxDataSource,
                        UserEventService userEventService,
                        UserEventRepository userEventRepository,
-                       RedisTemplate redisTemplate,
+                       RedisTemplate<String, Object> redisTemplate,
                        com.example.be.repository.UserBadgeRepository userBadgeRepository) {
         this.premiumCaseRepository = premiumCaseRepository;
         this.caseQuestionRepository = caseQuestionRepository;
@@ -222,82 +222,93 @@ public class PremiumCaseService {
     public SQLQueryResponse runQuery(SQLQueryRequest sqlQueryRequest) {
         validateCaseIsolation(sqlQueryRequest.caseId(), sqlQueryRequest.query());
         CustomUserDetail customUserDetail = SecurityUtil.getCurrentUser();
-        User user = userRepository.findById(customUserDetail.getUserId())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        if (sqlQueryRequest.questionId() != null) {
-            CaseQuestion caseQuestion = caseQuestionRepository.findById(sqlQueryRequest.questionId())
-                    .orElseThrow(() -> new CaseQuestionNotFoundException("Question not found"));
-            if (!caseQuestion.getPremiumCase().getId().equals(sqlQueryRequest.caseId())) {
-                throw new BadRequestException("Question does not belong to the specified case");
-            }
-            UserCaseProgress progress = userCaseProgressRepository
-                    .findByUserIdAndCaseQuestionId(user.getId(), caseQuestion.getId())
-                    .orElseGet(() -> UserCaseProgress.builder()
-                            .user(user)
-                            .premiumCase(caseQuestion.getPremiumCase())
-                            .caseQuestion(caseQuestion)
-                            .status("IN_PROGRESS")
-                            .hintsUsed(0)
-                            .attempts(0)
-                            .scoreEarned(0)
-                            .build());
-
-            if (!"COMPLETED".equalsIgnoreCase(progress.getStatus())) {
-                int attempts = progress.getAttempts() != null ? progress.getAttempts() : 0;
-                progress.setAttempts(attempts + 1);
-                userCaseProgressRepository.save(progress);
-            }
-            String meta = "caseId=" + sqlQueryRequest.caseId() + ",questionId=" + sqlQueryRequest.questionId();
-            userEventService.logEvent(user, UserEventType.SQL_EXECUTED, meta);
-        } else {
-            userEventService.logEvent(user, UserEventType.SQL_EXECUTED, "caseId=" + sqlQueryRequest.caseId());
+        // Concurrency Throttling: Giới hạn mỗi user chỉ được chạy tối đa 1 query song song
+        String inFlightKey = "sandbox:in_flight:" + customUserDetail.getUserId();
+        Boolean lockAcquired = redisTemplate.opsForValue().setIfAbsent(inFlightKey, "RUNNING", Duration.ofSeconds(5));
+        if (Boolean.FALSE.equals(lockAcquired)) {
+            throw new BadRequestException("A previous query is still running. Please wait a moment!");
         }
 
-        String normalizedSql = sqlQueryRequest.query().trim().toLowerCase().replaceAll("\\s+", " ");
-        String queryHash = DigestUtils.md5DigestAsHex(normalizedSql.getBytes(StandardCharsets.UTF_8));
-        String cacheKey = "sandbox:case_" + sqlQueryRequest.caseId() + ":" + queryHash;
-        SQLQueryResponse cachedResponse = (SQLQueryResponse) redisTemplate.opsForValue().get(cacheKey);
-        if (cachedResponse != null) {
-            return cachedResponse; // Cache Hit: Trả kết quả ngay, không cần kết nối MySQL!
-        }
-        try (Connection conn = sandboxDataSource.getConnection()) {
-            String originalCatalog = conn.getCatalog();
-            try {
-                conn.setCatalog("case_" + sqlQueryRequest.caseId());
-                conn.setReadOnly(true);
+        try {
+            User user = userRepository.findById(customUserDetail.getUserId())
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-                try (Statement stmt = conn.createStatement()) {
-                    stmt.setQueryTimeout(3);
-                    stmt.setMaxRows(10);
+            if (sqlQueryRequest.questionId() != null) {
+                CaseQuestion caseQuestion = caseQuestionRepository.findById(sqlQueryRequest.questionId())
+                        .orElseThrow(() -> new CaseQuestionNotFoundException("Question not found"));
+                if (!caseQuestion.getPremiumCase().getId().equals(sqlQueryRequest.caseId())) {
+                    throw new BadRequestException("Question does not belong to the specified case");
+                }
+                UserCaseProgress progress = userCaseProgressRepository
+                        .findByUserIdAndCaseQuestionId(user.getId(), caseQuestion.getId())
+                        .orElseGet(() -> UserCaseProgress.builder()
+                                .user(user)
+                                .premiumCase(caseQuestion.getPremiumCase())
+                                .caseQuestion(caseQuestion)
+                                .status("IN_PROGRESS")
+                                .hintsUsed(0)
+                                .attempts(0)
+                                .scoreEarned(0)
+                                .build());
 
-                    try (ResultSet rs = stmt.executeQuery(sqlQueryRequest.query())) {
-                        List<Map<String, Object>> rows = new ArrayList<>();
-                        ResultSetMetaData metaData = rs.getMetaData();
-                        int columnCount = metaData.getColumnCount();
+                if (!"COMPLETED".equalsIgnoreCase(progress.getStatus())) {
+                    int attempts = progress.getAttempts() != null ? progress.getAttempts() : 0;
+                    progress.setAttempts(attempts + 1);
+                    userCaseProgressRepository.save(progress);
+                }
+                String meta = "caseId=" + sqlQueryRequest.caseId() + ",questionId=" + sqlQueryRequest.questionId();
+                userEventService.logEvent(user, UserEventType.SQL_EXECUTED, meta);
+            } else {
+                userEventService.logEvent(user, UserEventType.SQL_EXECUTED, "caseId=" + sqlQueryRequest.caseId());
+            }
 
-                        while (rs.next()) {
-                            Map<String, Object> row = new LinkedHashMap<>();
-                            for (int i = 1; i <= columnCount; i++) {
-                                row.put(metaData.getColumnLabel(i), rs.getObject(i));
+            String normalizedSql = sqlQueryRequest.query().trim().toLowerCase().replaceAll("\\s+", " ");
+            String queryHash = DigestUtils.md5DigestAsHex(normalizedSql.getBytes(StandardCharsets.UTF_8));
+            String cacheKey = "sandbox:case_" + sqlQueryRequest.caseId() + ":" + queryHash;
+            SQLQueryResponse cachedResponse = (SQLQueryResponse) redisTemplate.opsForValue().get(cacheKey);
+            if (cachedResponse != null) {
+                return cachedResponse; // Cache Hit: Trả kết quả ngay, không cần kết nối MySQL!
+            }
+            try (Connection conn = sandboxDataSource.getConnection()) {
+                String originalCatalog = conn.getCatalog();
+                try {
+                    conn.setCatalog("case_" + sqlQueryRequest.caseId());
+                    conn.setReadOnly(true);
+
+                    try (Statement stmt = conn.createStatement()) {
+                        stmt.setQueryTimeout(3);
+                        stmt.setMaxRows(10);
+
+                        try (ResultSet rs = stmt.executeQuery(sqlQueryRequest.query())) {
+                            List<Map<String, Object>> rows = new ArrayList<>();
+                            ResultSetMetaData metaData = rs.getMetaData();
+                            int columnCount = metaData.getColumnCount();
+
+                            while (rs.next()) {
+                                Map<String, Object> row = new LinkedHashMap<>();
+                                for (int i = 1; i <= columnCount; i++) {
+                                    row.put(metaData.getColumnLabel(i), rs.getObject(i));
+                                }
+                                rows.add(row);
                             }
-                            rows.add(row);
+                            SQLQueryResponse response = new SQLQueryResponse(rows);
+                            redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(30));
+                            return response;
                         }
-                        SQLQueryResponse response = new SQLQueryResponse(rows);
-                        redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(30));
-                        return response;
+                    }
+                } finally {
+                    conn.setReadOnly(false);
+                    if (originalCatalog != null && !originalCatalog.isBlank()) {
+                        conn.setCatalog(originalCatalog);
                     }
                 }
-            } finally {
-                conn.setReadOnly(false);
-                if (originalCatalog != null && !originalCatalog.isBlank()) {
-                    conn.setCatalog(originalCatalog);
-                }
+            } catch (SQLException e) {
+                throw new BadRequestException("SQL Execution Error: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            throw new BadRequestException("SQL Execution Error: " + e.getMessage());
+        } finally {
+            redisTemplate.delete(inFlightKey);
         }
-
     }
 
     @PreAuthorize("principal.isPurchased == true or T(com.example.be.service.PremiumCaseService).FREE_CASE_IDS.contains(#endCaseRequest.caseId)")
@@ -364,7 +375,10 @@ public class PremiumCaseService {
         progress.setCompletedAt(LocalDateTime.now());
         userCaseProgressRepository.save(progress);
 
-        user.setTotalScore(user.getTotalScore() + scoreEarned);
+        if (scoreEarned > 0) {
+            userRepository.incrementTotalScore(user.getId(), scoreEarned);
+            user.setTotalScore(user.getTotalScore() + scoreEarned);
+        }
 
         long completedCount = userCaseProgressRepository
                 .countByUserIdAndPremiumCaseIdAndStatus(user.getId(), premiumCase.getId(), "COMPLETED");

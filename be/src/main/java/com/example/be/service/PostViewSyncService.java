@@ -21,8 +21,8 @@ public class PostViewSyncService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final JdbcTemplate jdbcTemplate;
 
-    private static final String VIEW_BUFFER_PREFIX = "post:view:buffer:";
-    private static final String DIRTY_POST_SET = "post:view:dirty_ids";
+    private static final String VIEW_HASH_KEY = "post:views:buffer";
+    private static final String SYNC_HASH_KEY = "post:views:syncing";
 
     public PostViewSyncService(RedisTemplate<String, Object> redisTemplate, JdbcTemplate jdbcTemplate) {
         this.redisTemplate = redisTemplate;
@@ -33,39 +33,43 @@ public class PostViewSyncService {
     private record PostViewDelta(Long postId, Long viewsToAdd) {}
 
     /**
-     * 1. Khi người dùng đọc bài: Tăng bộ đệm trên Redis siêu tốc (< 1ms), không chạm vào MySQL.
+     * 1. Khi người dùng đọc bài: Tăng bộ đệm trên Redis Hash siêu tốc (< 1ms), không chạm vào MySQL.
      */
     public void recordView(Long postId) {
-        redisTemplate.opsForValue().increment(VIEW_BUFFER_PREFIX + postId);
-        redisTemplate.opsForSet().add(DIRTY_POST_SET, postId.toString());
+        redisTemplate.opsForHash().increment(VIEW_HASH_KEY, postId.toString(), 1L);
     }
 
     /**
      * 2. Chạy ngầm mỗi 5 phút (300.000 ms):
-     *    Gom toàn bộ các bài viết có view mới và thực hiện 1 CÂU BATCH UPDATE DUY NHẤT xuống MySQL.
+     *    Nguyên tử đổi tên Hash buffer -> syncing, gom batch update vào MySQL mà không mất view nào.
      */
     @Scheduled(fixedRate = 300000)
     @Transactional
     public void syncViewsToDatabase() {
-        Set<Object> dirtyIds = redisTemplate.opsForSet().members(DIRTY_POST_SET);
-        if (dirtyIds == null || dirtyIds.isEmpty()) {
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(VIEW_HASH_KEY))) {
+            return;
+        }
+
+        // Đổi tên nguyên tử sang key tạm để không bao giờ bị race condition với view mới đang đọc
+        try {
+            redisTemplate.rename(VIEW_HASH_KEY, SYNC_HASH_KEY);
+        } catch (Exception e) {
+            log.warn("Rename view hash buffer failed or empty: {}", e.getMessage());
+            return;
+        }
+
+        java.util.Map<Object, Object> entries = redisTemplate.opsForHash().entries(SYNC_HASH_KEY);
+        if (entries == null || entries.isEmpty()) {
+            redisTemplate.delete(SYNC_HASH_KEY);
             return;
         }
 
         List<PostViewDelta> deltas = new ArrayList<>();
-
-        for (Object objId : dirtyIds) {
-            String postIdStr = (String) objId;
-            Long postId = Long.valueOf(postIdStr);
-            String bufferKey = VIEW_BUFFER_PREFIX + postId;
-
-            // getAndDelete: Lấy số view ra và xóa key ngay trên Redis để giải phóng RAM
-            Object viewsObj = redisTemplate.opsForValue().getAndDelete(bufferKey);
-            if (viewsObj != null) {
-                long viewsToAdd = Long.parseLong(viewsObj.toString());
-                if (viewsToAdd > 0) {
-                    deltas.add(new PostViewDelta(postId, viewsToAdd));
-                }
+        for (java.util.Map.Entry<Object, Object> entry : entries.entrySet()) {
+            Long postId = Long.valueOf(entry.getKey().toString());
+            long viewsToAdd = Long.parseLong(entry.getValue().toString());
+            if (viewsToAdd > 0) {
+                deltas.add(new PostViewDelta(postId, viewsToAdd));
             }
         }
 
@@ -73,24 +77,35 @@ public class PostViewSyncService {
         if (!deltas.isEmpty()) {
             String sql = "UPDATE posts SET view_count = view_count + ? WHERE id = ?";
 
-            jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-                @Override
-                public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    PostViewDelta delta = deltas.get(i);
-                    ps.setLong(1, delta.viewsToAdd());
-                    ps.setLong(2, delta.postId());
-                }
+            try {
+                jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        PostViewDelta delta = deltas.get(i);
+                        ps.setLong(1, delta.viewsToAdd());
+                        ps.setLong(2, delta.postId());
+                    }
 
-                @Override
-                public int getBatchSize() {
-                    return deltas.size();
-                }
-            });
+                    @Override
+                    public int getBatchSize() {
+                        return deltas.size();
+                    }
+                });
 
-            log.info("Batch updated view counts for {} posts to MySQL successfully.", deltas.size());
+                // Chỉ xóa key trên Redis sau khi MySQL đã commit batch thành công
+                redisTemplate.delete(SYNC_HASH_KEY);
+                log.info("Batch updated view counts for {} posts to MySQL successfully.", deltas.size());
+            } catch (Exception e) {
+                log.error("Failed to batch update views to MySQL. Merging back to Redis buffer: {}", e.getMessage());
+                // Merge views trở lại buffer chính để chống mất dữ liệu khi DB lỗi
+                for (PostViewDelta delta : deltas) {
+                    redisTemplate.opsForHash().increment(VIEW_HASH_KEY, delta.postId().toString(), delta.viewsToAdd());
+                }
+                redisTemplate.delete(SYNC_HASH_KEY);
+                throw e;
+            }
+        } else {
+            redisTemplate.delete(SYNC_HASH_KEY);
         }
-
-        // Xóa tập hợp dirty IDs sau khi đã đồng bộ xong
-        redisTemplate.delete(DIRTY_POST_SET);
     }
 }

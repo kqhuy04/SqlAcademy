@@ -1,0 +1,13 @@
+node_modules/
+dist/
+screenshots/
+scripts/
+test-font-rendering.png
+*.tsbuildinfo
+.env
+.env.local
+.claude/
+.design/
+.md/
+vite.config.d.ts
+axe_audit_results.json
